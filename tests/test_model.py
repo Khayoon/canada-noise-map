@@ -82,7 +82,8 @@ def test_encode_values_reserves_zero_for_nodata():
     valid = np.array([[True, True], [False, True]])
     v = tiles.encode_values(db, valid)
     assert v[1, 0] == 0
-    assert v[0, 0] == 70 and v[0, 1] == 120 and v[1, 1] == 190
+    s = tiles.VALUE_SCALE
+    assert v[0, 0] == 35 * s and v[0, 1] == 60 * s and v[1, 1] == 95 * s
 
 
 def test_downsample_is_energy_mean():

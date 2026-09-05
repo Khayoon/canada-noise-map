@@ -32,6 +32,11 @@
    [
     "Billy Bishop Toronto City Airport",
     "YTZ",
+    "minor"
+   ],
+   [
+    "Billy Bishop Toronto City Airport",
+    "YTZ",
     "regional"
    ]
   ],
@@ -80,7 +85,12 @@
    [
     "A\u00e9roport Les C\u00e8dres",
     "SS3",
-    "regional"
+    "minor"
+   ],
+   [
+    "A\u00e9roport m\u00e9tropolitain de Montr\u00e9al",
+    "YHU",
+    "minor"
    ],
    [
     "A\u00e9roport m\u00e9tropolitain de Montr\u00e9al",
@@ -92,7 +102,7 @@
    "median_db": 53.7,
    "p90_db": 64.6,
    "share_over_65": 0.094,
-   "share_under_50": 0.378
+   "share_under_50": 0.379
   }
  },
  {
@@ -124,6 +134,11 @@
     "Vancouver International Airport",
     "YVR",
     "major"
+   ],
+   [
+    "Boundary Bay Airport",
+    "YDT",
+    "minor"
    ],
    [
     "Pitt Meadows Airport",
@@ -174,13 +189,13 @@
     "major"
    ],
    [
-    "A\u00e9roport de Gatineau",
-    "YND",
-    "regional"
-   ],
-   [
     "Rockcliffe Airport",
     "YRO",
+    "minor"
+   ],
+   [
+    "A\u00e9roport de Gatineau",
+    "YND",
     "regional"
    ]
   ],
@@ -188,7 +203,7 @@
    "median_db": 53.8,
    "p90_db": 64.6,
    "share_over_65": 0.092,
-   "share_under_50": 0.358
+   "share_under_50": 0.359
   }
  },
  {
@@ -335,6 +350,11 @@
    "aerodromes": 1
   },
   "airports": [
+   [
+    "Victoria International Airport",
+    "YYJ",
+    "minor"
+   ],
    [
     "Victoria International Airport",
     "YYJ",

@@ -84,7 +84,7 @@ Median modelled daytime level across the Toronto extract is 59 dB; Toronto Publi
 
 ## Deploying
 
-The site is the `web/` folder — plain static files, tileset included (~30 MB).
+The site is the `web/` folder — plain static files, tileset included (~21 MB).
 
 **GitHub Pages (zero config):** push to GitHub, enable *Settings → Pages → Source: GitHub Actions*. The workflow in `.github/workflows/pages.yml` publishes `web/` on every push to `main`. GitHub Pages serves HTTP range requests, which is all PMTiles needs.
 

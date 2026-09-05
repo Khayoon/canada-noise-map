@@ -3,7 +3,7 @@ Cut the dB raster into XYZ tiles, merge regions, and write a PMTiles archive.
 
 Tiles are stored twice on the way out:
 
-1. A small SQLite "value store" holding the raw uint8 dB*2 values per tile
+1. A small SQLite "value store" holding the raw uint8 dB values per tile
    (0 = no data).  Regions are merged here (cell-wise maximum) so overlapping
    low-zoom tiles from neighbouring cities end up in one tile.
 2. The final MBTiles/PMTiles with paletted PNGs.  The palette is fixed at
@@ -23,7 +23,7 @@ from pmtiles.convert import mbtiles_to_pmtiles
 
 from . import config as C
 
-VALUE_SCALE = 2  # stored value = round(dB * 2); 0 reserved for no data
+VALUE_SCALE = 1  # stored value = round(dB); 0 reserved for no data
 
 
 # ---------------------------------------------------------------------------
@@ -185,7 +185,7 @@ def values_to_png(values: np.ndarray, lut: np.ndarray) -> bytes:
     img = Image.fromarray(values, mode="P")
     img.putpalette(lut[:, :3].astype(np.uint8).tobytes(), rawmode="RGB")
     buf = io.BytesIO()
-    img.save(buf, format="PNG", optimize=True, transparency=0)
+    img.save(buf, format="PNG", optimize=True, compress_level=9, transparency=0)
     return buf.getvalue()
 
 

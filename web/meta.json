@@ -1,7 +1,7 @@
 {
- "built_at": "2026-09-05T20:33:44Z",
+ "built_at": "2026-09-05T22:07:18Z",
  "tiles": "tiles/canada-noise.pmtiles",
- "tiles_mb": 28.8,
+ "tiles_mb": 20.7,
  "base_zoom": 13,
  "min_zoom": 6,
  "bounds": [
@@ -131,5 +131,5 @@
   "halifax",
   "victoria"
  ],
- "build_seconds": 122
+ "build_seconds": 203
 }
