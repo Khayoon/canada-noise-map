@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Canada Noise Map</title>
+  <meta name="description" content="Free, open noise pollution map for Canadian cities. Modelled daytime road, rail and aircraft noise from OpenStreetMap data.">
+  <meta property="og:title" content="Canada Noise Map">
+  <meta property="og:description" content="How loud is this address? Modelled transportation noise for Toronto, Montréal, Vancouver, Ottawa, Calgary, Kitchener–Waterloo, Halifax and Victoria.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%23f03b20'/><circle cx='16' cy='16' r='9' fill='%23fecc5c'/><circle cx='16' cy='16' r='4' fill='%233d8f3a'/></svg>">
+  <link rel="stylesheet" href="vendor/maplibre-gl.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="map" role="application" aria-label="Noise map"></div>
+
+  <header id="panel" class="panel">
+    <div class="panel-head">
+      <h1><span class="dot"></span>Canada Noise Map</h1>
+      <button id="about-btn" class="link-btn" type="button">About</button>
+    </div>
+    <div class="search-row">
+      <input id="search" type="search" placeholder="Search an address or place…" autocomplete="off" spellcheck="false" aria-label="Search address">
+      <ul id="results" class="results" hidden></ul>
+    </div>
+    <div class="city-row">
+      <label for="city">City</label>
+      <select id="city" aria-label="Jump to a city"></select>
+    </div>
+    <p class="hint">Click or tap anywhere on the map to read the estimated noise level.</p>
+  </header>
+
+  <aside id="legend" class="legend">
+    <div class="legend-title">Daytime noise, dB(A)</div>
+    <div id="ramp" class="ramp"></div>
+    <div id="ticks" class="ticks"></div>
+    <div class="legend-row">
+      <label for="opacity">Overlay</label>
+      <input id="opacity" type="range" min="0" max="100" value="65" aria-label="Overlay opacity">
+    </div>
+  </aside>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <div id="about" class="modal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="about-title">
+      <button id="about-close" class="close" type="button" aria-label="Close">×</button>
+      <h2 id="about-title">About this map</h2>
+      <p>
+        This is a free, open <strong>transportation noise map for Canadian cities</strong>, in the spirit of the
+        noise layer on US real-estate sites and the US DOT's National Transportation Noise Map — which Canada
+        does not have. Every road, railway and runway in OpenStreetMap is treated as a line source with a
+        class-based emission level; sound spreads with distance and ground/air absorption and all sources are
+        summed in the energy domain. The result is an estimated <em>daytime A-weighted equivalent level</em>
+        (LAeq) on a ~15 m grid.
+      </p>
+      <h3>How to read it</h3>
+      <table class="cats"><tbody id="cat-table"></tbody></table>
+      <h3>Coverage</h3>
+      <table class="regions"><thead><tr><th>City</th><th>OSM data</th><th>Median</th><th>≥ 65 dB</th><th>Airports</th></tr></thead><tbody id="region-table"></tbody></table>
+      <h3>Limitations — please read</h3>
+      <ul>
+        <li>It is a <strong>model, not a measurement</strong>. Traffic volumes are inferred from road class, lanes and speed limits, not counted.</li>
+        <li>Buildings, terrain and noise barriers are ignored, so levels behind a row of houses or a highway berm are overestimated.</li>
+        <li>Airports are modelled as line sources along runways: real flight paths, runway usage and night restrictions are not.</li>
+        <li>Coverage stops at the edge of each city extract; roads just outside it are missing, so edges read quieter than they are.</li>
+        <li>Local sources (construction, bars, industry, sirens) are not included.</li>
+      </ul>
+      <p class="fine">
+        Built with <a href="https://maplibre.org" target="_blank" rel="noopener">MapLibre GL JS</a>,
+        <a href="https://github.com/protomaps/PMTiles" target="_blank" rel="noopener">PMTiles</a>,
+        basemap by <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a>,
+        search by <a href="https://photon.komoot.io" target="_blank" rel="noopener">Photon</a>.
+        Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>, ODbL.
+        City extracts courtesy of <a href="https://download.bbbike.org/osm/" target="_blank" rel="noopener">BBBike</a>.
+        Model parameters and source code: <a id="repo-link" href="#" target="_blank" rel="noopener">GitHub</a>.
+        <span id="built-at"></span>
+      </p>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="vendor/pmtiles.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

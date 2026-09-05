@@ -1,0 +1,351 @@
+[
+ {
+  "id": "toronto",
+  "name": "Toronto",
+  "province": "ON",
+  "bbox": [
+   -79.79,
+   43.48,
+   -79.0,
+   43.92
+  ],
+  "center": [
+   -79.3832,
+   43.6532
+  ],
+  "zoom": 11,
+  "cell_m": 13.8,
+  "osm_timestamp": "2026-08-28T23:00:00Z",
+  "sources": {
+   "ways": 1480390,
+   "roads": 155473,
+   "rails": 5275,
+   "runways": 15,
+   "aerodromes": 4
+  },
+  "airports": [
+   [
+    "Toronto Pearson International Airport",
+    "YYZ",
+    "major"
+   ],
+   [
+    "Billy Bishop Toronto City Airport",
+    "YTZ",
+    "regional"
+   ]
+  ],
+  "stats": {
+   "median_db": 59.0,
+   "p90_db": 68.7,
+   "share_over_65": 0.19,
+   "share_under_50": 0.139
+  }
+ },
+ {
+  "id": "montreal",
+  "name": "Montr\u00e9al",
+  "province": "QC",
+  "bbox": [
+   -74.086,
+   45.301,
+   -73.268,
+   45.75
+  ],
+  "center": [
+   -73.5674,
+   45.5019
+  ],
+  "zoom": 11,
+  "cell_m": 13.4,
+  "osm_timestamp": "2026-08-28T23:00:00Z",
+  "sources": {
+   "ways": 1540468,
+   "roads": 151197,
+   "rails": 3108,
+   "runways": 19,
+   "aerodromes": 7
+  },
+  "airports": [
+   [
+    "A\u00e9roport international Montr\u00e9al-Trudeau",
+    "YUL",
+    "major"
+   ],
+   [
+    "A\u00e9roport international Montr\u00e9al\u2013Mirabel",
+    "YMX",
+    "major"
+   ],
+   [
+    "A\u00e9roport Les C\u00e8dres",
+    "SS3",
+    "regional"
+   ],
+   [
+    "A\u00e9roport m\u00e9tropolitain de Montr\u00e9al",
+    "YHU",
+    "regional"
+   ]
+  ],
+  "stats": {
+   "median_db": 53.7,
+   "p90_db": 64.6,
+   "share_over_65": 0.094,
+   "share_under_50": 0.378
+  }
+ },
+ {
+  "id": "vancouver",
+  "name": "Vancouver",
+  "province": "BC",
+  "bbox": [
+   -123.307,
+   48.999,
+   -122.668,
+   49.416
+  ],
+  "center": [
+   -123.1207,
+   49.2827
+  ],
+  "zoom": 11,
+  "cell_m": 12.5,
+  "osm_timestamp": "2026-08-28T23:00:00Z",
+  "sources": {
+   "ways": 927578,
+   "roads": 90237,
+   "rails": 2789,
+   "runways": 16,
+   "aerodromes": 6
+  },
+  "airports": [
+   [
+    "Vancouver International Airport",
+    "YVR",
+    "major"
+   ],
+   [
+    "Pitt Meadows Airport",
+    null,
+    "minor"
+   ],
+   [
+    "Boundary Bay Airport",
+    "YDT",
+    "regional"
+   ]
+  ],
+  "stats": {
+   "median_db": 54.9,
+   "p90_db": 65.2,
+   "share_over_65": 0.103,
+   "share_under_50": 0.356
+  }
+ },
+ {
+  "id": "ottawa",
+  "name": "Ottawa\u2013Gatineau",
+  "province": "ON",
+  "bbox": [
+   -75.95,
+   45.21,
+   -75.4,
+   45.532
+  ],
+  "center": [
+   -75.6972,
+   45.4215
+  ],
+  "zoom": 11,
+  "cell_m": 13.4,
+  "osm_timestamp": "2026-08-28T23:00:00Z",
+  "sources": {
+   "ways": 628493,
+   "roads": 50410,
+   "rails": 651,
+   "runways": 11,
+   "aerodromes": 6
+  },
+  "airports": [
+   [
+    "Macdonald-Cartier International Airport",
+    "YOW",
+    "major"
+   ],
+   [
+    "A\u00e9roport de Gatineau",
+    "YND",
+    "regional"
+   ],
+   [
+    "Rockcliffe Airport",
+    "YRO",
+    "regional"
+   ]
+  ],
+  "stats": {
+   "median_db": 53.8,
+   "p90_db": 64.6,
+   "share_over_65": 0.092,
+   "share_under_50": 0.358
+  }
+ },
+ {
+  "id": "calgary",
+  "name": "Calgary",
+  "province": "AB",
+  "bbox": [
+   -114.314,
+   50.857,
+   -113.764,
+   51.217
+  ],
+  "center": [
+   -114.0719,
+   51.0447
+  ],
+  "zoom": 11,
+  "cell_m": 12.0,
+  "osm_timestamp": "2026-08-28T23:00:00Z",
+  "sources": {
+   "ways": 728172,
+   "roads": 70434,
+   "rails": 1164,
+   "runways": 5,
+   "aerodromes": 3
+  },
+  "airports": [
+   [
+    "Calgary International Airport",
+    "YYC",
+    "major"
+   ]
+  ],
+  "stats": {
+   "median_db": 55.4,
+   "p90_db": 66.1,
+   "share_over_65": 0.12,
+   "share_under_50": 0.347
+  }
+ },
+ {
+  "id": "waterloo",
+  "name": "Kitchener\u2013Waterloo",
+  "province": "ON",
+  "bbox": [
+   -80.65,
+   43.29,
+   -80.14,
+   43.62
+  ],
+  "center": [
+   -80.4925,
+   43.4516
+  ],
+  "zoom": 11,
+  "cell_m": 13.9,
+  "osm_timestamp": "2026-08-28T23:00:00Z",
+  "sources": {
+   "ways": 413336,
+   "roads": 34511,
+   "rails": 527,
+   "runways": 11,
+   "aerodromes": 3
+  },
+  "airports": [
+   [
+    "Guelph Airpark",
+    null,
+    "minor"
+   ],
+   [
+    "Region of Waterloo International Airport",
+    "YKF",
+    "regional"
+   ]
+  ],
+  "stats": {
+   "median_db": 51.2,
+   "p90_db": 62.4,
+   "share_over_65": 0.062,
+   "share_under_50": 0.449
+  }
+ },
+ {
+  "id": "halifax",
+  "name": "Halifax",
+  "province": "NS",
+  "bbox": [
+   -63.716,
+   44.609,
+   -63.458,
+   44.754
+  ],
+  "center": [
+   -63.5752,
+   44.6488
+  ],
+  "zoom": 12,
+  "cell_m": 13.6,
+  "osm_timestamp": "2026-08-28T23:00:00Z",
+  "sources": {
+   "ways": 122191,
+   "roads": 13768,
+   "rails": 310,
+   "runways": 1,
+   "aerodromes": 2
+  },
+  "airports": [
+   [
+    "Sherwater Water Aerodome",
+    null,
+    "minor"
+   ]
+  ],
+  "stats": {
+   "median_db": 54.3,
+   "p90_db": 64.8,
+   "share_over_65": 0.097,
+   "share_under_50": 0.359
+  }
+ },
+ {
+  "id": "victoria",
+  "name": "Victoria",
+  "province": "BC",
+  "bbox": [
+   -123.578,
+   48.392,
+   -123.25,
+   48.702
+  ],
+  "center": [
+   -123.3656,
+   48.4284
+  ],
+  "zoom": 12,
+  "cell_m": 12.7,
+  "osm_timestamp": "2026-08-28T23:00:00Z",
+  "sources": {
+   "ways": 156147,
+   "roads": 18063,
+   "rails": 15,
+   "runways": 7,
+   "aerodromes": 1
+  },
+  "airports": [
+   [
+    "Victoria International Airport",
+    "YYJ",
+    "regional"
+   ]
+  ],
+  "stats": {
+   "median_db": 47.8,
+   "p90_db": 60.4,
+   "share_over_65": 0.039,
+   "share_under_50": 0.571
+  }
+ }
+]

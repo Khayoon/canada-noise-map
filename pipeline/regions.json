@@ -1,0 +1,10 @@
+[
+  {"id": "toronto",   "name": "Toronto",             "province": "ON", "pbf": "Toronto.osm.pbf",   "center": [-79.3832, 43.6532], "zoom": 11},
+  {"id": "montreal",  "name": "Montréal",            "province": "QC", "pbf": "Montreal.osm.pbf",  "center": [-73.5674, 45.5019], "zoom": 11},
+  {"id": "vancouver", "name": "Vancouver",           "province": "BC", "pbf": "Vancouver.osm.pbf", "center": [-123.1207, 49.2827], "zoom": 11},
+  {"id": "ottawa",    "name": "Ottawa–Gatineau",     "province": "ON", "pbf": "Ottawa.osm.pbf",    "center": [-75.6972, 45.4215], "zoom": 11},
+  {"id": "calgary",   "name": "Calgary",             "province": "AB", "pbf": "Calgary.osm.pbf",   "center": [-114.0719, 51.0447], "zoom": 11},
+  {"id": "waterloo",  "name": "Kitchener–Waterloo",  "province": "ON", "pbf": "Waterloo.osm.pbf",  "center": [-80.4925, 43.4516], "zoom": 11},
+  {"id": "halifax",   "name": "Halifax",             "province": "NS", "pbf": "Halifax.osm.pbf",   "center": [-63.5752, 44.6488], "zoom": 12},
+  {"id": "victoria",  "name": "Victoria",            "province": "BC", "pbf": "Victoria.osm.pbf",  "center": [-123.3656, 48.4284], "zoom": 12}
+]

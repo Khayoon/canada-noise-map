@@ -1,0 +1,108 @@
+:root {
+  --bg: rgba(255, 255, 255, 0.94);
+  --ink: #1b1f23;
+  --muted: #5b6470;
+  --line: #e3e6ea;
+  --accent: #1f6feb;
+  --radius: 12px;
+  --shadow: 0 4px 18px rgba(20, 30, 40, 0.16);
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; height: 100%; font-family: var(--font); color: var(--ink); }
+#map { position: absolute; inset: 0; background: #e9ecef; }
+
+/* ---------- top-left panel ---------- */
+.panel {
+  position: absolute; top: 12px; left: 12px; z-index: 5;
+  width: min(360px, calc(100vw - 24px));
+  background: var(--bg); backdrop-filter: blur(8px);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 12px 14px 10px;
+}
+.panel-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.panel h1 { font-size: 17px; margin: 0; font-weight: 650; letter-spacing: -0.01em; display: flex; align-items: center; gap: 8px; }
+.panel h1 .dot { width: 12px; height: 12px; border-radius: 50%; background: radial-gradient(circle, #3d8f3a 0 25%, #fecc5c 26% 60%, #f03b20 61%); display: inline-block; }
+.link-btn { background: none; border: 0; color: var(--accent); font: inherit; font-size: 13px; cursor: pointer; padding: 4px 6px; border-radius: 6px; }
+.link-btn:hover { background: rgba(31, 111, 235, 0.08); }
+
+.search-row { position: relative; margin-top: 10px; }
+#search {
+  width: 100%; font: inherit; font-size: 14px; padding: 9px 12px;
+  border: 1px solid var(--line); border-radius: 9px; background: #fff; outline: none;
+}
+#search:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.15); }
+.results {
+  position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 10;
+  list-style: none; margin: 0; padding: 4px; background: #fff;
+  border: 1px solid var(--line); border-radius: 9px; box-shadow: var(--shadow);
+  max-height: 260px; overflow: auto;
+}
+.results li { padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 13px; line-height: 1.3; }
+.results li:hover, .results li.active { background: rgba(31, 111, 235, 0.09); }
+.results li small { display: block; color: var(--muted); }
+
+.city-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 13px; }
+.city-row label { color: var(--muted); }
+#city { flex: 1; font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+.hint { margin: 10px 0 0; font-size: 12px; color: var(--muted); }
+
+/* ---------- legend ---------- */
+.legend {
+  position: absolute; left: 12px; bottom: 28px; z-index: 5;
+  width: min(300px, calc(100vw - 24px));
+  background: var(--bg); backdrop-filter: blur(8px);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 10px 14px 10px; font-size: 12px;
+}
+.legend-title { font-weight: 600; margin-bottom: 6px; }
+.ramp { height: 12px; border-radius: 6px; border: 1px solid rgba(0, 0, 0, 0.08); }
+.ticks { display: flex; justify-content: space-between; color: var(--muted); margin-top: 3px; font-variant-numeric: tabular-nums; }
+.legend-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; color: var(--muted); }
+.legend-row input { flex: 1; accent-color: var(--accent); }
+
+/* ---------- popup ---------- */
+.maplibregl-popup { max-width: 280px !important; font-family: var(--font); }
+.maplibregl-popup-content { border-radius: 10px; padding: 12px 14px; box-shadow: var(--shadow); }
+.pop-level { display: flex; align-items: baseline; gap: 8px; }
+.pop-db { font-size: 30px; font-weight: 700; letter-spacing: -0.02em; line-height: 1; }
+.pop-db small { font-size: 13px; font-weight: 500; color: var(--muted); margin-left: 2px; }
+.pop-cat { font-weight: 600; padding: 3px 8px; border-radius: 999px; font-size: 12px; color: #fff; }
+.pop-blurb { margin: 8px 0 0; font-size: 12.5px; color: var(--ink); }
+.pop-score { margin: 8px 0 0; font-size: 12px; color: var(--muted); }
+.pop-score b { color: var(--ink); }
+.pop-addr { margin: 6px 0 0; font-size: 11.5px; color: var(--muted); }
+.pop-none { font-size: 13px; }
+
+/* ---------- toast ---------- */
+.toast {
+  position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 6;
+  background: #1b1f23; color: #fff; font-size: 13px; padding: 8px 14px; border-radius: 999px; box-shadow: var(--shadow);
+}
+
+/* ---------- modal ---------- */
+.modal { position: fixed; inset: 0; z-index: 20; background: rgba(15, 20, 25, 0.45); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.modal-card {
+  position: relative; background: #fff; border-radius: 14px; max-width: 720px; width: 100%; max-height: 90vh; overflow: auto;
+  padding: 22px 26px 18px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); font-size: 14px; line-height: 1.5;
+}
+.modal-card h2 { margin: 0 0 8px; font-size: 20px; }
+.modal-card h3 { margin: 18px 0 6px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+.modal-card ul { padding-left: 20px; margin: 4px 0; }
+.modal-card li { margin: 3px 0; }
+.modal-card .fine { font-size: 12px; color: var(--muted); margin-top: 16px; }
+.close { position: absolute; top: 10px; right: 12px; background: none; border: 0; font-size: 26px; line-height: 1; cursor: pointer; color: var(--muted); }
+table.cats, table.regions { border-collapse: collapse; width: 100%; font-size: 13px; }
+table.cats td, table.regions td, table.regions th { padding: 5px 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+table.regions th { color: var(--muted); font-weight: 600; font-size: 12px; }
+.swatch { display: inline-block; width: 14px; height: 14px; border-radius: 4px; vertical-align: -2px; margin-right: 6px; border: 1px solid rgba(0, 0, 0, 0.08); }
+
+/* ---------- small screens ---------- */
+@media (max-width: 640px) {
+  .panel { top: 8px; left: 8px; width: calc(100vw - 16px); padding: 10px 12px 8px; }
+  .hint { display: none; }
+  .legend { left: 8px; bottom: 24px; width: calc(100vw - 16px); }
+  .maplibregl-ctrl-bottom-right { bottom: 132px; }
+}
