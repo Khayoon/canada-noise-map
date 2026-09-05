@@ -1,0 +1,18 @@
+# source extracts and build scratch (re-downloadable with `python -m pipeline.download`)
+data/*.osm.pbf
+data/*.part
+data/build/
+data/*.npz
+data/*.log
+# python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+# editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+# vercel
+.vercel
