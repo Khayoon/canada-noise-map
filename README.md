@@ -2,7 +2,7 @@
 
 A free, open **noise-pollution map for Canadian cities** — the kind of "how loud is this address?" layer that US real-estate sites get from commercial data and the US DOT's [National Transportation Noise Map](https://www.bts.gov/geospatial/national-transportation-noise-map), which Canada does not have.
 
-Everything is pre-computed: a Python pipeline turns OpenStreetMap roads, railways and runways into a decibel raster, packs it into a single [PMTiles](https://github.com/protomaps/PMTiles) file, and a static MapLibre page reads values straight out of the tiles. No server, no API keys, no per-request cost — it runs on GitHub Pages, Vercel, Netlify or any static host.
+Everything is pre-computed
 
 **Coverage (first release):** Toronto, Montréal, Vancouver, Ottawa–Gatineau, Calgary, Kitchener–Waterloo, Halifax, Victoria.
 
