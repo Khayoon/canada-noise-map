@@ -3,7 +3,7 @@ Cut the dB raster into XYZ tiles, merge regions, and write a PMTiles archive.
 
 Tiles are stored twice on the way out:
 
-1. A small SQLite "value store" holding the raw uint8 dB values per tile
+1. A small SQLite "value store" holding the raw uint8 dB*2 values per tile
    (0 = no data).  Regions are merged here (cell-wise maximum) so overlapping
    low-zoom tiles from neighbouring cities end up in one tile.
 2. The final MBTiles/PMTiles with paletted PNGs.  The palette is fixed at
@@ -141,10 +141,28 @@ def downsample(db: np.ndarray, valid: np.ndarray):
 
 
 def cut_tiles(store: ValueStore, db: np.ndarray, valid: np.ndarray, px0: int, py0: int,
-              base_zoom: int = C.BASE_ZOOM, min_zoom: int = C.MIN_ZOOM) -> dict:
-    """Write tiles for every zoom from base_zoom down to min_zoom into the store."""
+              base_zoom: int = C.BASE_ZOOM, min_zoom: int = C.MIN_ZOOM,
+              variable_detail: bool | None = None) -> dict:
+    """Write tiles for every zoom from base_zoom down to min_zoom into the store.
+
+    With `variable_detail` on, tiles above C.DETAIL_MIN_ZOOM are only stored
+    where there is enough data in them to be worth the bytes (see
+    detail_zoom_for).  A highway crossing empty country is perfectly well
+    described by a zoom-11 tile stretched by the renderer, and storing it at
+    zoom 13 as well costs 16x the space for no visible detail.  This is what
+    keeps a national build's archive to a size a static host will serve; for a
+    handful of dense cities it saves almost nothing, so it defaults to
+    C.VARIABLE_DETAIL.
+
+    The web app renders a base layer capped at C.DETAIL_MIN_ZOOM underneath the
+    full-detail layer, so a missing high-zoom tile shows the stretched coarse
+    one rather than a hole.
+    """
+    if variable_detail is None:
+        variable_detail = C.VARIABLE_DETAIL
     T = C.TILE_SIZE
     counts = {}
+    skipped = 0
     ox, oy = px0, py0
     for z in range(base_zoom, min_zoom - 1, -1):
         values = encode_values(db, valid)
@@ -166,6 +184,9 @@ def cut_tiles(store: ValueStore, db: np.ndarray, valid: np.ndarray, px0: int, py
                     continue
                 tile = np.zeros((T, T), dtype=np.uint8)
                 tile[sa0 - a0:sa1 - a0, sb0 - b0:sb1 - b0] = sub
+                if variable_detail and z > C.DETAIL_MIN_ZOOM and z > detail_zoom_for(tile):
+                    skipped += 1
+                    continue
                 store.merge(z, tx, ty, tile)
                 n += 1
         counts[z] = n
@@ -174,6 +195,8 @@ def cut_tiles(store: ValueStore, db: np.ndarray, valid: np.ndarray, px0: int, py
             db, valid = downsample(db, valid)
             ox //= 2
             oy //= 2
+    if skipped:
+        counts["sparse_skipped"] = skipped
     return counts
 
 
@@ -189,6 +212,31 @@ def values_to_png(values: np.ndarray, lut: np.ndarray) -> bytes:
     return buf.getvalue()
 
 
+def values_to_webp(values: np.ndarray, lut: np.ndarray) -> bytes:
+    """Lossless WebP.  ~28% smaller than optimised PNG and pixel-exact, so the
+    front end can still invert the palette to recover the decibel value."""
+    rgba = np.empty(values.shape + (4,), dtype=np.uint8)
+    rgba[..., :3] = lut[values, :3]
+    rgba[..., 3] = np.where(values == 0, 0, 255)
+    buf = io.BytesIO()
+    Image.fromarray(rgba, mode="RGBA").save(buf, format="WEBP", lossless=True, quality=100, method=5)
+    return buf.getvalue()
+
+
+def encode_tile(values: np.ndarray, lut: np.ndarray, fmt: str = None) -> bytes:
+    fmt = (fmt or C.TILE_FORMAT).lower()
+    return values_to_webp(values, lut) if fmt == "webp" else values_to_png(values, lut)
+
+
+def detail_zoom_for(values: np.ndarray) -> int:
+    """Max zoom worth storing for a chunk, from how much of it carries data."""
+    frac = float((values > 0).mean())
+    for threshold, zoom in C.DETAIL_RULES:
+        if frac >= threshold:
+            return zoom
+    return C.DETAIL_MIN_ZOOM
+
+
 def write_mbtiles(store: ValueStore, lut: np.ndarray, out_path: str, bounds, metadata: dict, log=print):
     import os
     if os.path.exists(out_path):
@@ -201,7 +249,7 @@ def write_mbtiles(store: ValueStore, lut: np.ndarray, out_path: str, bounds, met
     n = 0
     total_bytes = 0
     for z, x, y, values in store.tiles():
-        png = values_to_png(values, lut)
+        png = encode_tile(values, lut)
         tms_y = (1 << z) - 1 - y
         conn.execute("INSERT INTO tiles VALUES (?, ?, ?, ?)", (z, x, tms_y, sqlite3.Binary(png)))
         zooms.add(z)
@@ -211,7 +259,7 @@ def write_mbtiles(store: ValueStore, lut: np.ndarray, out_path: str, bounds, met
             conn.commit()
     meta = {
         "name": metadata.get("name", "Canada Noise Map"),
-        "format": "png",
+        "format": C.TILE_FORMAT,
         "type": "overlay",
         "version": "1",
         "description": metadata.get("description", ""),
@@ -224,7 +272,7 @@ def write_mbtiles(store: ValueStore, lut: np.ndarray, out_path: str, bounds, met
     conn.executemany("INSERT INTO metadata VALUES (?, ?)", list(meta.items()))
     conn.commit()
     conn.close()
-    log(f"  wrote {n} PNG tiles, {total_bytes / 1e6:.1f} MB of PNG data")
+    log(f"  wrote {n} {C.TILE_FORMAT} tiles, {total_bytes / 1e6:.1f} MB of image data")
     return n
 
 

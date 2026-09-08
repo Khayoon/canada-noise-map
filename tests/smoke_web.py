@@ -21,7 +21,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PORT = 8791
 OUT = os.path.join(ROOT, "tests", "screenshots")
 
-PROBES = [  # (name, lng, lat, expect_value)
+PROBES = [  # (name, lng, lat, expect_value)  - expect None means "outside coverage"
     ("Toronto – Gardiner Expwy @ Spadina", -79.3910, 43.6385, True),
     ("Toronto – Leaside residential", -79.3665, 43.7085, True),
     ("Montréal – Autoroute 40 @ Décarie", -73.6700, 45.5010, True),
@@ -54,7 +54,11 @@ def main():
 
             for name, lng, lat, expect in PROBES:
                 val = page.evaluate("([lng, lat]) => window.__noise.readNoise(lng, lat)", [lng, lat])
-                ok = (val is None) if expect is None else (val is not None and val.get("db") is not None and 35 <= val["db"] <= 95)
+                if expect is None:
+                    ok = val is None
+                else:
+                    d, n = (val or {}).get("day"), (val or {}).get("night")
+                    ok = (d is not None and n is not None and 35 <= d <= 95 and 35 <= n <= 95 and n <= d + 0.01)
                 status = "ok " if ok else "FAIL"
                 print(f"{status} {name:45s} -> {val}")
                 failures += 0 if ok else 1
@@ -68,6 +72,17 @@ def main():
                 print("FAIL popup has no reading")
                 failures += 1
             page.screenshot(path=os.path.join(OUT, "toronto_click.png"))
+
+            # day/night toggle must switch the visible layer and redraw the popup
+            page.click('.period-btn[data-period="night"]')
+            page.wait_for_timeout(3000)
+            vis = page.evaluate("() => window.__noise.ready()")
+            txt_night = page.inner_text(".maplibregl-popup")
+            print("night popup:", " ".join(txt_night.split())[:110])
+            if "Nighttime" not in txt_night and "night" not in txt_night.lower():
+                print("FAIL night popup did not update")
+                failures += 1
+            page.screenshot(path=os.path.join(OUT, "toronto_night.png"))
 
             # zoom to street level to check overzoom rendering
             page.goto(f"http://localhost:{PORT}/#15.5/43.6535/-79.3830", wait_until="load")

@@ -25,10 +25,23 @@ import numpy as np
 import osmium
 
 from . import config as C
+from . import emission
 from . import extract, model, tiles
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
+
+
+def _is_empty(npz_path: str) -> bool:
+    """True when a region's extract contains nothing worth modelling.
+
+    Regions derived automatically from a province extract can legitimately come
+    up empty (a cluster that fell entirely inside a neighbouring region's halo,
+    or a box over water), and an empty region must be skipped rather than
+    crash the run.
+    """
+    d = np.load(npz_path)
+    return len(d["road_levels"]) == 0 and len(d["runway_levels"]) == 0
 
 
 def log(msg):
@@ -64,10 +77,13 @@ def build(regions_path: str, data_dir: str, out_dir: str, only: set[str] | None 
     tiles_dir = os.path.join(out_dir, "tiles")
     os.makedirs(tiles_dir, exist_ok=True)
 
-    store_path = os.path.join(work_dir, "values.sqlite")
-    if os.path.exists(store_path):
-        os.remove(store_path)
-    store = tiles.ValueStore(store_path)
+    periods = list(C.PERIODS)
+    stores = {}
+    for period in periods:
+        sp = os.path.join(work_dir, f"values-{period}.sqlite")
+        if os.path.exists(sp):
+            os.remove(sp)
+        stores[period] = tiles.ValueStore(sp)
 
     region_out = []
     union = [180, 90, -180, -90]
@@ -80,13 +96,25 @@ def build(regions_path: str, data_dir: str, out_dir: str, only: set[str] | None 
         npz = os.path.join(work_dir, f"{reg['id']}.npz")
         if force_extract or not os.path.exists(npz) or os.path.getmtime(npz) < os.path.getmtime(pbf):
             log("  extracting sources from OSM ...")
-            meta = extract.extract(pbf, npz, bbox=reg.get("bbox"))
+            # A region derived by pipeline/regionize.py carries its own bbox and
+            # may share one province-sized extract with dozens of other
+            # regions, so only the ways touching this box are read.  The bbox
+            # already includes a halo (see regionize.HALO_DEG), and overlapping
+            # regions resolve correctly because ValueStore.merge keeps the
+            # louder of two values - an edge always UNDER-estimates, so the
+            # region that owns the interior wins.
+            meta = extract.extract(pbf, npz, bbox=reg.get("bbox"),
+                                   clip=reg.get("bbox") if reg.get("clip", True) else None)
             log(f"  {meta['stats']} in {meta['seconds']}s")
         else:
             log("  using cached extraction")
-        res = model.compute(npz, log=log)
+        if _is_empty(npz):
+            log("  no modelled sources in this region - skipping")
+            continue
+        res = model.compute(npz, log=log, periods=periods)
         g = res["grid"]
-        counts = tiles.cut_tiles(store, res["db"], res["valid"], g.px0, g.py0)
+        for period in periods:
+            counts = tiles.cut_tiles(stores[period], res["db"][period], res["valid"], g.px0, g.py0)
         log(f"  tiles per zoom: {counts} ({time.time() - t0:.0f}s)")
 
         d = np.load(npz)
@@ -94,7 +122,8 @@ def build(regions_path: str, data_dir: str, out_dir: str, only: set[str] | None 
         bbox = res["bbox"]
         union = [min(union[0], bbox[0]), min(union[1], bbox[1]), max(union[2], bbox[2]), max(union[3], bbox[3])]
         valid = res["valid"]
-        dbv = res["db"][valid]
+        dbv = res["db"]["day"][valid]
+        nightv = res["db"]["night"][valid]
         region_out.append({
             "id": reg["id"],
             "name": reg["name"],
@@ -112,24 +141,35 @@ def build(regions_path: str, data_dir: str, out_dir: str, only: set[str] | None 
                 "p90_db": round(float(np.percentile(dbv, 90)), 1),
                 "share_over_65": round(float((dbv >= 65).mean()), 3),
                 "share_under_50": round(float((dbv < 50).mean()), 3),
+                "median_db_night": round(float(np.median(nightv)), 1),
+                "share_over_55_night": round(float((nightv >= 55).mean()), 3),
             },
         })
         del res, d
-    store.commit()
-    log(f"value store: {store.count()} tiles")
-
     lut = tiles.build_palette()
-    mbtiles_path = os.path.join(work_dir, "canada-noise.mbtiles")
-    pmtiles_path = os.path.join(tiles_dir, "canada-noise.pmtiles")
     attribution = "Noise model © Canada Noise Map contributors · Map data © OpenStreetMap contributors (ODbL)"
-    tiles.write_mbtiles(store, lut, mbtiles_path, union,
-                        {"name": "Canada Noise Map", "attribution": attribution,
-                         "description": "Modelled daytime transportation noise (LAeq, dB) from OpenStreetMap roads, railways and runways."},
-                        log=log)
-    store.close()
-    tiles.write_pmtiles(mbtiles_path, pmtiles_path)
-    size_mb = os.path.getsize(pmtiles_path) / 1e6
-    log(f"wrote {pmtiles_path} ({size_mb:.1f} MB)")
+    period_out = {}
+    size_mb = 0.0
+    for period in periods:
+        store = stores[period]
+        store.commit()
+        log(f"[{period}] value store: {store.count()} tiles")
+        mbtiles_path = os.path.join(work_dir, f"canada-noise-{period}.mbtiles")
+        rel = f"tiles/canada-noise-{period}.pmtiles"
+        pmtiles_path = os.path.join(out_dir, rel)
+        spec = C.PERIODS[period]
+        tiles.write_mbtiles(store, lut, mbtiles_path, union,
+                            {"name": f"Canada Noise Map ({spec['label']})", "attribution": attribution,
+                             "description": f"Modelled {spec['label'].lower()} transportation noise "
+                                            f"({spec['metric']}, {spec['hours']}) from OpenStreetMap "
+                                            f"roads, railways and runways."},
+                            log=log)
+        store.close()
+        tiles.write_pmtiles(mbtiles_path, pmtiles_path)
+        mb = os.path.getsize(pmtiles_path) / 1e6
+        size_mb += mb
+        period_out[period] = {**spec, "tiles": rel, "mb": round(mb, 1)}
+        log(f"wrote {pmtiles_path} ({mb:.1f} MB)")
 
     with open(os.path.join(out_dir, "regions.json"), "w") as f:
         json.dump(region_out, f, indent=1)
@@ -137,13 +177,24 @@ def build(regions_path: str, data_dir: str, out_dir: str, only: set[str] | None 
         json.dump(tiles.palette_json(lut), f)
     meta = {
         "built_at": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "tiles": "tiles/canada-noise.pmtiles",
+        "periods": period_out,
+        "default_period": "day",
         "tiles_mb": round(size_mb, 1),
         "base_zoom": C.BASE_ZOOM,
         "min_zoom": C.MIN_ZOOM,
+        "tile_format": C.TILE_FORMAT,
+        "detail_min_zoom": C.DETAIL_MIN_ZOOM,
         "bounds": [round(v, 4) for v in union],
         "model": {
-            "road_classes": C.ROAD_CLASSES,
+            # Road levels are derived from traffic, not tabulated, so the
+            # traffic table and the resulting levels are both published here.
+            "road_traffic": C.ROAD_TRAFFIC,
+            "road_levels": {
+                cls: {"day": round(d, 1), "night": round(n, 1)}
+                for cls in C.ROAD_TRAFFIC
+                for d, n in [emission.road_levels(cls, None, None)]
+            },
+            "emission_anchor": emission.ANCHOR,
             "rail_levels": C.RAIL_LEVELS,
             "runway_levels": C.RUNWAY_LEVELS,
             "road_kernel": C.ROAD_KERNEL,
@@ -151,6 +202,8 @@ def build(regions_path: str, data_dir: str, out_dir: str, only: set[str] | None 
             "ref_dist_road_m": C.REF_DIST_ROAD_M,
             "ref_dist_air_m": C.REF_DIST_AIR_M,
             "nodata_distance_m": C.NODATA_DISTANCE_M,
+            "rail_night_delta": C.RAIL_NIGHT_DELTA,
+            "runway_night_delta": C.RUNWAY_NIGHT_DELTA,
         },
         "regions": [r["id"] for r in region_out],
         "build_seconds": round(time.time() - t_start),

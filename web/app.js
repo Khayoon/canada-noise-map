@@ -14,12 +14,16 @@ const els = {
   ramp: $("ramp"), ticks: $("ticks"), toast: $("toast"),
   about: $("about"), aboutBtn: $("about-btn"), aboutClose: $("about-close"),
   catTable: $("cat-table"), regionTable: $("region-table"), repoLink: $("repo-link"), builtAt: $("built-at"),
+  legendTitle: $("legend-title"),
 };
 
 let palette, regions, meta;
 let baseZoom = BASE_ZOOM;
-let map, pm, popup, marker;
-const tileCache = new Map();  // "z/x/y" -> ImageData | null
+let map, popup, marker;
+let period = "day";                 // active period, keyed into meta.periods
+let lastReading = null;             // so the popup can be re-rendered on toggle
+const pmByPeriod = {};              // period -> PMTiles instance
+const tileCache = new Map();  // "period/z/x/y" -> ImageData | null
 let colorIndex = null;        // "r,g,b" -> palette index
 
 // ---------------------------------------------------------------------------
@@ -42,10 +46,14 @@ async function boot() {
   buildCityPicker();
   buildAbout();
 
-  const tilesUrl = new URL(CFG.tilesUrl, location.href).href;
-  pm = new pmtiles.PMTiles(tilesUrl);
+  period = meta.default_period || "day";
   const protocol = new pmtiles.Protocol();
-  protocol.add(pm);
+  const tileUrls = {};
+  for (const [name, spec] of Object.entries(meta.periods)) {
+    tileUrls[name] = new URL((CFG.tilesBaseUrl || "") + spec.tiles, location.href).href;
+    pmByPeriod[name] = new pmtiles.PMTiles(tileUrls[name]);
+    protocol.add(pmByPeriod[name]);
+  }
   maplibregl.addProtocol("pmtiles", protocol.tile);
 
   const style = await loadBasemapStyle();
@@ -66,7 +74,7 @@ async function boot() {
   map.addControl(new maplibregl.ScaleControl({ unit: "metric" }), "bottom-right");
 
   map.on("load", () => {
-    addNoiseLayer(tilesUrl);
+    addNoiseLayers(tileUrls);
     addCoverageOutline();
     map.on("click", onMapClick);
     map.getCanvas().style.cursor = "crosshair";
@@ -76,9 +84,8 @@ async function boot() {
   });
 
   wireSearch();
-  els.opacity.addEventListener("input", () => {
-    if (map.getLayer("noise")) map.setPaintProperty("noise", "raster-opacity", els.opacity.value / 100);
-  });
+  wirePeriodToggle();
+  els.opacity.addEventListener("input", applyOpacity);
   els.aboutBtn.addEventListener("click", () => (els.about.hidden = false));
   els.aboutClose.addEventListener("click", () => (els.about.hidden = true));
   els.about.addEventListener("click", (e) => { if (e.target === els.about) els.about.hidden = true; });
@@ -117,23 +124,82 @@ function firstSymbolLayerId() {
   return undefined;
 }
 
-function addNoiseLayer(tilesUrl) {
-  map.addSource("noise", {
-    type: "raster",
-    url: "pmtiles://" + tilesUrl,
-    tileSize: 256,
-    attribution: "Noise model: <a href='" + CFG.repoUrl + "' target='_blank' rel='noopener'>Canada Noise Map</a>",
-  });
-  map.addLayer({
-    id: "noise",
-    type: "raster",
-    source: "noise",
-    paint: {
+function addNoiseLayers(tileUrls) {
+  const before = firstSymbolLayerId();
+  // Sparse country is only stored down to meta.detail_min_zoom: a highway
+  // crossing empty land looks the same stretched from zoom 11 as it does
+  // stored at zoom 13, and not storing it is what keeps a national tileset
+  // small enough for a static host.  So each period gets two layers over the
+  // same archive - a base capped at that zoom, which MapLibre overzooms so it
+  // is never full of holes, and the real detail drawn on top of it wherever
+  // detail tiles exist.
+  const detailMin = meta.detail_min_zoom ?? null;
+  for (const name of Object.keys(meta.periods)) {
+    const url = "pmtiles://" + tileUrls[name];
+    const common = {
+      type: "raster",
+      tileSize: 256,
+      attribution: "Noise model: <a href='" + CFG.repoUrl + "' target='_blank' rel='noopener'>Canada Noise Map</a>",
+    };
+    const paint = {
       "raster-opacity": els.opacity.value / 100,
       "raster-resampling": "linear",
       "raster-fade-duration": 150,
-    },
-  }, firstSymbolLayerId());
+    };
+    const visible = name === period ? "visible" : "none";
+
+    if (detailMin !== null) {
+      map.addSource("noise-" + name + "-base", { ...common, url, maxzoom: detailMin });
+      map.addLayer({
+        id: "noise-" + name + "-base",
+        type: "raster",
+        source: "noise-" + name + "-base",
+        layout: { visibility: visible },
+        paint,
+      }, before);
+    }
+    map.addSource("noise-" + name, { ...common, url });
+    map.addLayer({
+      id: "noise-" + name,
+      type: "raster",
+      source: "noise-" + name,
+      layout: { visibility: visible },
+      paint,
+    }, before);
+  }
+}
+
+/** Every layer id belonging to a period (detail plus, if present, its base). */
+function layerIdsFor(name) {
+  return ["noise-" + name + "-base", "noise-" + name].filter((id) => map.getLayer(id));
+}
+
+function applyOpacity() {
+  for (const name of Object.keys(meta.periods)) {
+    for (const id of layerIdsFor(name)) {
+      map.setPaintProperty(id, "raster-opacity", els.opacity.value / 100);
+    }
+  }
+}
+
+function wirePeriodToggle() {
+  document.querySelectorAll(".period-btn").forEach((btn) => {
+    btn.addEventListener("click", () => setPeriod(btn.dataset.period));
+  });
+}
+
+function setPeriod(next) {
+  if (!meta.periods[next] || next === period) return;
+  period = next;
+  for (const name of Object.keys(meta.periods)) {
+    for (const id of layerIdsFor(name)) {
+      map.setLayoutProperty(id, "visibility", name === period ? "visible" : "none");
+    }
+  }
+  document.querySelectorAll(".period-btn").forEach((b) =>
+    b.classList.toggle("is-active", b.dataset.period === period));
+  els.legendTitle.textContent = meta.periods[period].label + " noise, dB(A)";
+  if (lastReading) showReading(lastReading.lng, lastReading.lat, lastReading.addr);
 }
 
 function addCoverageOutline() {
@@ -175,14 +241,14 @@ function lngLatToTile(lng, lat, z) {
   return { tx: Math.floor(x / 256), ty: Math.floor(y / 256), px: Math.floor(x) % 256, py: Math.floor(y) % 256 };
 }
 
-async function tileImageData(z, x, y) {
-  const key = `${z}/${x}/${y}`;
+async function tileImageData(which, z, x, y) {
+  const key = `${which}/${z}/${x}/${y}`;
   if (tileCache.has(key)) return tileCache.get(key);
   let out = null;
   try {
-    const res = await pm.getZxy(z, x, y);
+    const res = await pmByPeriod[which].getZxy(z, x, y);
     if (res && res.data) {
-      const blob = new Blob([res.data], { type: "image/png" });
+      const blob = new Blob([res.data], { type: "image/" + (meta.tile_format || "png") });
       const bmp = await createImageBitmap(blob, { colorSpaceConversion: "none", premultiplyAlpha: "none" });
       const canvas = document.createElement("canvas");
       canvas.width = 256; canvas.height = 256;
@@ -210,19 +276,30 @@ function nearestIndex(r, g, b) {
   return best;
 }
 
-/** Returns {db} for a covered location, {db:null} for no-data, or null outside all cities. */
+async function readOne(which, lng, lat) {
+  // Walk down from the deepest zoom: sparse areas may only be stored coarser.
+  const minZ = meta.detail_min_zoom ?? baseZoom;
+  for (let z = baseZoom; z >= minZ; z--) {
+    const { tx, ty, px, py } = lngLatToTile(lng, lat, z);
+    const img = await tileImageData(which, z, tx, ty);
+    if (!img) continue;
+    const o = (py * 256 + px) * 4;
+    if (img.data[o + 3] === 0) return null;
+    const idx = nearestIndex(img.data[o], img.data[o + 1], img.data[o + 2]);
+    return idx > 0 ? idx / palette.scale : null;
+  }
+  return null;
+}
+
+/** Returns {day, night} for a covered location, or null outside every region. */
 async function readNoise(lng, lat) {
   const inside = regions.some((r) => lng >= r.bbox[0] && lng <= r.bbox[2] && lat >= r.bbox[1] && lat <= r.bbox[3]);
   if (!inside) return null;
-  const { tx, ty, px, py } = lngLatToTile(lng, lat, baseZoom);
-  const img = await tileImageData(baseZoom, tx, ty);
-  if (!img) return { db: null };
-  const o = (py * 256 + px) * 4;
-  const a = img.data[o + 3];
-  if (a === 0) return { db: null };
-  const idx = nearestIndex(img.data[o], img.data[o + 1], img.data[o + 2]);
-  if (idx <= 0) return { db: null };
-  return { db: idx / palette.scale };
+  const names = Object.keys(meta.periods);
+  const vals = await Promise.all(names.map((n) => readOne(n, lng, lat)));
+  const out = {};
+  names.forEach((n, i) => (out[n] = vals[i]));
+  return out;
 }
 
 // ---------------------------------------------------------------------------
@@ -263,30 +340,39 @@ async function showReading(lng, lat, addressHint) {
   if (popup) popup.remove();
   if (!marker) marker = new maplibregl.Marker({ color: "#1f6feb" });
   marker.setLngLat([lng, lat]).addTo(map);
+  lastReading = { lng, lat, addr: addressHint };
 
   const reading = await readNoise(lng, lat);
   let html;
   if (reading === null) {
     html = `<div class="pop-none"><b>Not covered yet.</b><br>Cities so far: ${regions.map((r) => r.name).join(", ")}.</div>`;
-  } else if (reading.db === null) {
+  } else if (reading[period] === null || reading[period] === undefined) {
     html = `<div class="pop-none"><b>No estimate here.</b><br>No road, railway or runway within 1.5 km of this point (water, parkland or beyond the modelled area).</div>`;
   } else {
-    const db = reading.db;
+    const db = reading[period];
     const cat = category(db);
+    const others = Object.keys(meta.periods)
+      .filter((n) => n !== period && reading[n] !== null && reading[n] !== undefined)
+      .map((n) => `${meta.periods[n].label.toLowerCase()} <b>${Math.round(reading[n])} dB</b>`)
+      .join(" · ");
+    const quieter = (reading.day != null && reading.night != null)
+      ? `<p class="pop-other">${Math.round(reading.day - reading.night)} dB quieter at night</p>` : "";
     html = `
       <div class="pop-level">
         <div class="pop-db">${Math.round(db)}<small>dB(A)</small></div>
         <span class="pop-cat" style="background:${colorFor(db)};color:${textColorOn(db)}">${cat.label}</span>
       </div>
       <p class="pop-blurb">${cat.blurb}</p>
-      <p class="pop-score">Quiet score <b>${quietScore(db)}</b> / 100 · estimated daytime average</p>
+      <p class="pop-score">${meta.periods[period].label} average (${meta.periods[period].hours}) · quiet score <b>${quietScore(db)}</b> / 100</p>
+      ${others ? `<p class="pop-other">Also ${others}</p>` : ""}
+      ${quieter}
       <p class="pop-addr" id="pop-addr">${addressHint ? escapeHtml(addressHint) : ""}</p>`;
   }
   popup = new maplibregl.Popup({ closeOnClick: false, offset: 28, maxWidth: "300px" })
     .setLngLat([lng, lat]).setHTML(html).addTo(map);
   popup.on("close", () => marker && marker.remove());
 
-  if (reading && reading.db !== null && !addressHint) reverseGeocode(lng, lat);
+  if (reading && reading[period] != null && !addressHint) reverseGeocode(lng, lat);
 }
 
 async function reverseGeocode(lng, lat) {
@@ -444,4 +530,4 @@ boot().catch((err) => {
 });
 
 // Expose a little test hook (used by the Playwright smoke test).
-window.__noise = { readNoise: (lng, lat) => readNoise(lng, lat), ready: () => !!map };
+window.__noise = { readNoise: (lng, lat) => readNoise(lng, lat), ready: () => !!map, setPeriod: (p) => setPeriod(p) };

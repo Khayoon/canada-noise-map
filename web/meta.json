@@ -1,9 +1,27 @@
 {
- "built_at": "2026-09-05T22:07:18Z",
- "tiles": "tiles/canada-noise.pmtiles",
- "tiles_mb": 20.7,
+ "built_at": "2026-09-07T16:13:42Z",
+ "periods": {
+  "day": {
+   "label": "Daytime",
+   "hours": "07:00-23:00",
+   "metric": "LAeq,16h",
+   "tiles": "tiles/canada-noise-day.pmtiles",
+   "mb": 18.8
+  },
+  "night": {
+   "label": "Nighttime",
+   "hours": "23:00-07:00",
+   "metric": "LAeq,8h",
+   "tiles": "tiles/canada-noise-night.pmtiles",
+   "mb": 15.6
+  }
+ },
+ "default_period": "day",
+ "tiles_mb": 34.4,
  "base_zoom": 13,
  "min_zoom": 6,
+ "tile_format": "webp",
+ "detail_min_zoom": 11,
  "bounds": [
   -123.578,
   43.29,
@@ -11,82 +29,181 @@
   51.217
  ],
  "model": {
-  "road_classes": {
-   "motorway": [
-    75.0,
-    3,
-    100
-   ],
-   "motorway_link": [
-    65.0,
-    1,
-    60
-   ],
-   "trunk": [
-    72.0,
-    2,
-    80
-   ],
-   "trunk_link": [
-    63.0,
-    1,
-    60
-   ],
-   "primary": [
-    69.0,
-    2,
-    60
-   ],
-   "primary_link": [
-    60.0,
-    1,
-    50
-   ],
-   "secondary": [
-    65.0,
-    2,
-    50
-   ],
-   "secondary_link": [
-    58.0,
-    1,
-    50
-   ],
-   "tertiary": [
-    61.0,
-    2,
-    50
-   ],
-   "tertiary_link": [
-    56.0,
-    1,
-    40
-   ],
-   "unclassified": [
-    55.0,
-    2,
-    40
-   ],
-   "residential": [
-    53.0,
-    2,
-    40
-   ],
-   "living_street": [
-    47.0,
-    1,
-    20
-   ],
-   "busway": [
-    58.0,
-    1,
-    50
-   ],
-   "service": [
-    44.0,
-    1,
-    20
-   ]
+  "road_traffic": {
+   "motorway": {
+    "aadt": 40000,
+    "lanes": 3,
+    "speed": 100,
+    "heavy": 0.12,
+    "night_share": 0.11
+   },
+   "motorway_link": {
+    "aadt": 6000,
+    "lanes": 1,
+    "speed": 60,
+    "heavy": 0.1,
+    "night_share": 0.11
+   },
+   "trunk": {
+    "aadt": 22000,
+    "lanes": 2,
+    "speed": 80,
+    "heavy": 0.1,
+    "night_share": 0.1
+   },
+   "trunk_link": {
+    "aadt": 4000,
+    "lanes": 1,
+    "speed": 60,
+    "heavy": 0.08,
+    "night_share": 0.1
+   },
+   "primary": {
+    "aadt": 28000,
+    "lanes": 4,
+    "speed": 60,
+    "heavy": 0.07,
+    "night_share": 0.08
+   },
+   "primary_link": {
+    "aadt": 3000,
+    "lanes": 1,
+    "speed": 50,
+    "heavy": 0.05,
+    "night_share": 0.08
+   },
+   "secondary": {
+    "aadt": 15000,
+    "lanes": 4,
+    "speed": 50,
+    "heavy": 0.05,
+    "night_share": 0.07
+   },
+   "secondary_link": {
+    "aadt": 2200,
+    "lanes": 1,
+    "speed": 50,
+    "heavy": 0.04,
+    "night_share": 0.07
+   },
+   "tertiary": {
+    "aadt": 7000,
+    "lanes": 2,
+    "speed": 50,
+    "heavy": 0.04,
+    "night_share": 0.06
+   },
+   "tertiary_link": {
+    "aadt": 1500,
+    "lanes": 1,
+    "speed": 40,
+    "heavy": 0.03,
+    "night_share": 0.06
+   },
+   "unclassified": {
+    "aadt": 2000,
+    "lanes": 2,
+    "speed": 40,
+    "heavy": 0.03,
+    "night_share": 0.06
+   },
+   "residential": {
+    "aadt": 900,
+    "lanes": 2,
+    "speed": 40,
+    "heavy": 0.02,
+    "night_share": 0.05
+   },
+   "living_street": {
+    "aadt": 200,
+    "lanes": 1,
+    "speed": 20,
+    "heavy": 0.02,
+    "night_share": 0.04
+   },
+   "busway": {
+    "aadt": 1200,
+    "lanes": 1,
+    "speed": 50,
+    "heavy": 0.8,
+    "night_share": 0.06
+   },
+   "service": {
+    "aadt": 150,
+    "lanes": 1,
+    "speed": 20,
+    "heavy": 0.03,
+    "night_share": 0.04
+   }
+  },
+  "road_levels": {
+   "motorway": {
+    "day": 72.0,
+    "night": 65.9
+   },
+   "motorway_link": {
+    "day": 59.2,
+    "night": 53.1
+   },
+   "trunk": {
+    "day": 67.1,
+    "night": 60.6
+   },
+   "trunk_link": {
+    "day": 57.1,
+    "night": 50.5
+   },
+   "primary": {
+    "day": 65.4,
+    "night": 57.8
+   },
+   "primary_link": {
+    "day": 53.9,
+    "night": 46.3
+   },
+   "secondary": {
+    "day": 60.9,
+    "night": 52.7
+   },
+   "secondary_link": {
+    "day": 52.3,
+    "night": 44.1
+   },
+   "tertiary": {
+    "day": 57.4,
+    "night": 48.5
+   },
+   "tertiary_link": {
+    "day": 49.1,
+    "night": 40.1
+   },
+   "unclassified": {
+    "day": 50.3,
+    "night": 41.4
+   },
+   "residential": {
+    "day": 46.6,
+    "night": 36.8
+   },
+   "living_street": {
+    "day": 37.9,
+    "night": 27.1
+   },
+   "busway": {
+    "day": 57.5,
+    "night": 48.6
+   },
+   "service": {
+    "day": 36.9,
+    "night": 26.1
+   }
+  },
+  "emission_anchor": {
+   "aadt": 40000.0,
+   "speed_kmh": 100.0,
+   "heavy_frac": 0.12,
+   "night_share": 0.11,
+   "level_db": 72.0
   },
   "rail_levels": {
    "main": 68.0,
@@ -107,8 +224,8 @@
   },
   "road_kernel": {
    "exponent": 2.5,
-   "height_m": 12.0,
-   "absorption_db_per_km": 2.0,
+   "height_m": 4.0,
+   "absorption_db_per_km": 12.0,
    "radius_m": 2000.0
   },
   "air_kernel": {
@@ -119,7 +236,24 @@
   },
   "ref_dist_road_m": 15.0,
   "ref_dist_air_m": 1000.0,
-  "nodata_distance_m": 1500.0
+  "nodata_distance_m": 1500.0,
+  "rail_night_delta": {
+   "main": -2.0,
+   "branch": -3.0,
+   "rail": -3.0,
+   "yard": -3.0,
+   "light_rail": -9.0,
+   "tram": -9.0,
+   "subway": -9.0,
+   "narrow_gauge": -6.0,
+   "monorail": -9.0,
+   "preserved": -20.0
+  },
+  "runway_night_delta": {
+   "major": -9.0,
+   "regional": -10.0,
+   "minor": -15.0
+  }
  },
  "regions": [
   "toronto",
@@ -131,5 +265,5 @@
   "halifax",
   "victoria"
  ],
- "build_seconds": 203
+ "build_seconds": 483
 }

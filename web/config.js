@@ -1,10 +1,13 @@
 // Runtime configuration for the web app.  Edit this file when you deploy.
 window.NOISE_CONFIG = {
-  // PMTiles archive produced by the pipeline.  Relative paths resolve against
-  // the page URL; use an absolute URL if you host the tiles elsewhere
-  // (Cloudflare R2, a GitHub release asset, S3 ...).  The host must support
-  // HTTP range requests - GitHub Pages, Vercel, Netlify, R2 and S3 all do.
-  tilesUrl: "tiles/canada-noise.pmtiles",
+  // Where the PMTiles archives live.  The build writes one archive per period
+  // (tiles/canada-noise-day.pmtiles, tiles/canada-noise-night.pmtiles) and
+  // records their paths in meta.json; this is just a prefix in front of them.
+  // Leave "" to serve them from this site, or point it at object storage
+  // (Cloudflare R2, S3 ...) if the tileset outgrows the repo.  Whatever host
+  // you use must support HTTP range requests - GitHub Pages, Vercel, Netlify,
+  // R2 and S3 all do.
+  tilesBaseUrl: "",
 
   // Any MapLibre style JSON.  OpenFreeMap is free, key-less and OSM-based.
   basemapStyle: "https://tiles.openfreemap.org/styles/liberty",

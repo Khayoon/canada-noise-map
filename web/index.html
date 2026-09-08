@@ -23,6 +23,10 @@
       <input id="search" type="search" placeholder="Search an address or place…" autocomplete="off" spellcheck="false" aria-label="Search address">
       <ul id="results" class="results" hidden></ul>
     </div>
+    <div class="period-row" role="radiogroup" aria-label="Time of day">
+      <button type="button" class="period-btn is-active" data-period="day">Daytime</button>
+      <button type="button" class="period-btn" data-period="night">Nighttime</button>
+    </div>
     <div class="city-row">
       <label for="city">City</label>
       <select id="city" aria-label="Jump to a city"></select>
@@ -31,7 +35,7 @@
   </header>
 
   <aside id="legend" class="legend">
-    <div class="legend-title">Daytime noise, dB(A)</div>
+    <div class="legend-title" id="legend-title">Daytime noise, dB(A)</div>
     <div id="ramp" class="ramp"></div>
     <div id="ticks" class="ticks"></div>
     <div class="legend-row">
@@ -49,10 +53,27 @@
       <p>
         This is a free, open <strong>transportation noise map for Canadian cities</strong>, in the spirit of the
         noise layer on US real-estate sites and the US DOT's National Transportation Noise Map — which Canada
-        does not have. Every road, railway and runway in OpenStreetMap is treated as a line source with a
-        class-based emission level; sound spreads with distance and ground/air absorption and all sources are
-        summed in the energy domain. The result is an estimated <em>daytime A-weighted equivalent level</em>
-        (LAeq) on a ~15 m grid.
+        does not have. Every road, railway and runway in OpenStreetMap is treated as a line source; sound
+        spreads with distance and absorption, and all sources are summed in the energy domain. The result is an
+        estimated <em>A-weighted equivalent level</em> (LAeq) on a ~15 m grid, for two periods:
+        <strong>daytime</strong> (07:00–23:00, LAeq,16h) and <strong>nighttime</strong> (23:00–07:00, LAeq,8h).
+      </p>
+      <p>
+        Road emission follows the <strong>CNOSSOS-EU</strong> formulation (EU Directive 2015/996): the level of a
+        road depends on its traffic flow, speed and heavy-vehicle share, not on a fixed number per road type.
+        Level rises 3&nbsp;dB per doubling of traffic and about 6&nbsp;dB per doubling of speed, and the absolute
+        scale is anchored to the published figure that freeway traffic measures 70–80&nbsp;dB(A) at 15&nbsp;m.
+        Night falls out of the same equation from the share of traffic that runs overnight.
+      </p>
+      <h3>How accurate is it?</h3>
+      <p>
+        Toronto Public Health modelled the whole city in 2017 with real traffic counts and professional
+        acoustics software, and published the share of residents above each threshold. Reproducing that table
+        from this map gives a <strong>mean gap of 4.2 percentage points</strong> (day ≥65&nbsp;dB: 21.5% here vs
+        27.1% there; night ≥45&nbsp;dB: 77.6% vs 77.4%). That is a comparison against a better-resourced model,
+        not against ground truth — and their model is itself only accurate to about 4&nbsp;dB RMSE against
+        measurements. This map over-predicts the middle of the range and under-predicts the loudest places,
+        which is what you would expect with no building shielding.
       </p>
       <h3>How to read it</h3>
       <table class="cats"><tbody id="cat-table"></tbody></table>
@@ -60,11 +81,17 @@
       <table class="regions"><thead><tr><th>City</th><th>OSM data</th><th>Median</th><th>≥ 65 dB</th><th>Airports</th></tr></thead><tbody id="region-table"></tbody></table>
       <h3>Limitations — please read</h3>
       <ul>
-        <li>It is a <strong>model, not a measurement</strong>. Traffic volumes are inferred from road class, lanes and speed limits, not counted.</li>
-        <li>Buildings, terrain and noise barriers are ignored, so levels behind a row of houses or a highway berm are overestimated.</li>
+        <li>It is a <strong>model, not a measurement</strong>. The acoustics are standard, but the traffic
+          volumes behind them are assumed from road class, lanes and speed limits, not counted. Real levels on
+          any given street can differ by 5 dB or more.</li>
+        <li>Buildings, terrain and noise barriers are not modelled individually — shielding is approximated by an
+          average attenuation, so levels behind a row of houses or a highway berm are overestimated.</li>
         <li>Airports are modelled as line sources along runways: real flight paths, runway usage and night restrictions are not.</li>
         <li>Coverage stops at the edge of each city extract; roads just outside it are missing, so edges read quieter than they are.</li>
         <li>Local sources (construction, bars, industry, sirens) are not included.</li>
+        <li><strong>Night is modelled, not counted.</strong> Each source class gets a diurnal offset from how much of
+          its traffic runs overnight — about −6 dB on freeways, −11 dB on residential streets, but only −2 dB on
+          freight rail, which runs all night. Real curfews and timetables are not used.</li>
       </ul>
       <p class="fine">
         Built with <a href="https://maplibre.org" target="_blank" rel="noopener">MapLibre GL JS</a>,

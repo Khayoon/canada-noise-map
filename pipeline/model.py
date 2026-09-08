@@ -198,47 +198,66 @@ def add_point_sources(dest: np.ndarray, src: np.ndarray, kernel: np.ndarray) -> 
 # Driver
 # ---------------------------------------------------------------------------
 
-def compute(npz_path: str, log=print) -> dict:
-    """Return {'db': float32 HxW, 'valid': bool HxW, 'grid': Grid, ...}."""
+def compute(npz_path: str, log=print, periods=("day", "night")) -> dict:
+    """Model every period from one geometry pass.
+
+    Returns {'db': {period: float32 HxW}, 'valid': bool HxW, 'grid': Grid, ...}.
+    Geometry, kernels and the validity mask are shared; only the per-way
+    emission energies differ between day and night, so each extra period costs
+    one more burn + convolution and nothing else.
+    """
     t0 = time.time()
     d = np.load(npz_path)
     bbox = [float(v) for v in d["bbox"]]
     grid = Grid(bbox)
     log(f"  grid {grid.width}x{grid.height} cells, {grid.cell_m:.1f} m on the ground")
 
-    # Roads + rail (same kernel)
     road_kernel = make_kernel(C.ROAD_KERNEL, grid.cell_m)
-    energies = cell_energy(d["road_levels"].astype(np.float64), C.REF_DIST_ROAD_M, C.ROAD_KERNEL, grid.cell_m)
     geoms = _linestrings(d["road_coords"], d["road_offsets"], grid.zoom, grid)
-    src_road = burn(grid, geoms, energies)
-    log(f"  burned {len(geoms)} road/rail ways into {int((src_road > 0).sum())} cells ({time.time() - t0:.0f}s)")
-    e_total = convolve_blocks(src_road, road_kernel)
-    log(f"  road kernel {road_kernel.shape[0]}px, convolution done ({time.time() - t0:.0f}s)")
-
-    # Runways
-    src_air = None
-    if len(d["runway_levels"]):
+    has_air = len(d["runway_levels"]) > 0
+    if has_air:
         air_kernel = make_kernel(C.AIR_KERNEL, grid.cell_m)
-        energies_air = cell_energy(d["runway_levels"].astype(np.float64), C.REF_DIST_AIR_M, C.AIR_KERNEL, grid.cell_m)
         geoms_air = _linestrings(d["runway_coords"], d["runway_offsets"], grid.zoom, grid)
-        src_air = burn(grid, geoms_air, energies_air)
-        if int((src_air > 0).sum()) > 1500:
-            e_total += convolve_blocks(src_air, air_kernel)
-        else:
-            add_point_sources(e_total, src_air, air_kernel)
-        log(f"  {int((src_air > 0).sum())} runway cells stamped with {air_kernel.shape[0]}px kernel ({time.time() - t0:.0f}s)")
 
-    # dB, floor/ceiling, validity
-    with np.errstate(divide="ignore"):
-        db = 10.0 * np.log10(e_total, dtype=np.float32)
-    np.clip(db, C.DISPLAY_FLOOR_DB, C.DISPLAY_CEIL_DB, out=db)
+    def level_array(prefix, period):
+        key = prefix if period == "day" else f"{prefix}_night"
+        if key not in d.files:
+            raise SystemExit(
+                f"{npz_path} has no '{key}' - it was extracted before day/night support. "
+                f"Re-run the build with --force-extract.")
+        return d[key].astype(np.float64)
 
-    src_mask = src_road > 0
-    if src_air is not None:
-        src_mask |= src_air > 0
+    out = {}
+    src_mask = None
+    for period in periods:
+        energies = cell_energy(level_array("road_levels", period), C.REF_DIST_ROAD_M, C.ROAD_KERNEL, grid.cell_m)
+        src_road = burn(grid, geoms, energies)
+        e_total = convolve_blocks(src_road, road_kernel)
+        mask = src_road > 0
+        del src_road
+
+        if has_air:
+            energies_air = cell_energy(level_array("runway_levels", period), C.REF_DIST_AIR_M, C.AIR_KERNEL, grid.cell_m)
+            src_air = burn(grid, geoms_air, energies_air)
+            if int((src_air > 0).sum()) > 1500:
+                e_total += convolve_blocks(src_air, air_kernel)
+            else:
+                add_point_sources(e_total, src_air, air_kernel)
+            mask |= src_air > 0
+            del src_air
+
+        with np.errstate(divide="ignore"):
+            db = 10.0 * np.log10(e_total, dtype=np.float32)
+        np.clip(db, C.DISPLAY_FLOOR_DB, C.DISPLAY_CEIL_DB, out=db)
+        out[period] = db
+        src_mask = mask if src_mask is None else (src_mask | mask)
+        log(f"  {period}: convolution done ({time.time() - t0:.0f}s)")
+
     dist = ndimage.distance_transform_edt(~src_mask) * grid.cell_m
     valid = (dist <= C.NODATA_DISTANCE_M) & grid.bbox_mask()
-    db[~valid] = 0.0
-    log(f"  {int(valid.sum())} valid cells; dB range {db[valid].min():.1f}-{db[valid].max():.1f}; "
-        f"median {np.median(db[valid]):.1f} ({time.time() - t0:.0f}s)")
-    return {"db": db, "valid": valid, "grid": grid, "bbox": bbox}
+    for period in out:
+        out[period][~valid] = 0.0
+    summary = " · ".join(
+        f"{p} median {np.median(out[p][valid]):.1f} (max {out[p][valid].max():.1f})" for p in out)
+    log(f"  {int(valid.sum())} valid cells; {summary} ({time.time() - t0:.0f}s)")
+    return {"db": out, "valid": valid, "grid": grid, "bbox": bbox}

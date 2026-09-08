@@ -19,6 +19,7 @@ import numpy as np
 import osmium
 
 from . import config as C
+from . import emission
 
 MAJOR_ICAO = {
     # Hubs that should be "major" even if a runway is under 2400 m.
@@ -52,8 +53,8 @@ def parse_lanes(value: str | None) -> int | None:
     return n if 1 <= n <= 16 else None
 
 
-def road_level(tags) -> float | None:
-    """Emission level (dB at REF_DIST_ROAD_M) for a highway way, or None to skip."""
+def road_class(tags) -> str | None:
+    """The ROAD_CLASSES key a highway way models as, or None to skip it."""
     cls = tags.get("highway")
     if cls not in C.ROAD_CLASSES:
         return None
@@ -63,20 +64,34 @@ def road_level(tags) -> float | None:
         return None
     if cls == "service" and tags.get("service") in ("driveway", "parking_aisle", "drive-through", "emergency_access"):
         return None
-    base, def_lanes, v_ref = C.ROAD_CLASSES[cls]
-    level = base
-    lanes = parse_lanes(tags.get("lanes"))
-    if lanes:
-        corr = 10.0 * math.log10(lanes / def_lanes)
-        level += min(max(corr, C.LANE_CORRECTION_CLAMP[0]), C.LANE_CORRECTION_CLAMP[1])
-    v = parse_maxspeed(tags.get("maxspeed"))
-    if v:
-        corr = 20.0 * math.log10(v / v_ref)
-        level += min(max(corr, C.SPEED_CORRECTION_CLAMP[0]), C.SPEED_CORRECTION_CLAMP[1])
-    return level
+    return cls
 
 
-def rail_level(tags) -> float | None:
+def road_day_night(tags) -> tuple[float, float] | None:
+    """(day, night) emission level in dB at REF_DIST_ROAD_M for a highway way.
+
+    Levels come from the traffic-flow model in pipeline/emission.py: the OSM
+    class supplies default AADT / speed / heavy share, and the way's own
+    `lanes` and `maxspeed` tags refine them where they are present.
+    """
+    cls = road_class(tags)
+    if cls is None:
+        return None
+    return emission.road_levels(
+        cls,
+        parse_lanes(tags.get("lanes")),
+        parse_maxspeed(tags.get("maxspeed")),
+    )
+
+
+def road_level(tags) -> float | None:
+    """Daytime emission level only (kept for probes and tests)."""
+    dn = road_day_night(tags)
+    return None if dn is None else dn[0]
+
+
+def rail_class(tags) -> str | None:
+    """The RAIL_LEVELS key a railway way models as, or None to skip it."""
     rw = tags.get("railway")
     if rw is None:
         return None
@@ -88,19 +103,38 @@ def rail_level(tags) -> float | None:
     usage = tags.get("usage")
     if rw == "rail":
         if service in ("yard", "spur", "siding", "crossover") or usage in ("industrial", "military"):
-            return C.RAIL_LEVELS["yard"]
+            return "yard"
         if usage == "main":
-            return C.RAIL_LEVELS["main"]
+            return "main"
         if usage == "branch":
-            return C.RAIL_LEVELS["branch"]
+            return "branch"
         if usage == "tourism":
-            return C.RAIL_LEVELS["preserved"]
-        return C.RAIL_LEVELS["rail"]
+            return "preserved"
+        return "rail"
     if rw in ("light_rail", "tram", "subway", "narrow_gauge", "monorail", "preserved"):
         if service in ("yard", "spur", "siding", "crossover"):
-            return C.RAIL_LEVELS["yard"]
-        return C.RAIL_LEVELS[rw]
+            return "yard"
+        return rw
     return None  # abandoned, disused, construction, platform, ...
+
+
+def rail_day_night(tags) -> tuple[float, float] | None:
+    cls = rail_class(tags)
+    return None if cls is None else emission.rail_levels(cls)
+
+
+def rail_level(tags) -> float | None:
+    dn = rail_day_night(tags)
+    return None if dn is None else dn[0]
+
+
+def night_delta_road(tags) -> float:
+    cls = road_class(tags)
+    return 0.0 if cls is None else emission.night_delta_for(cls)
+
+
+def night_delta_rail(tags) -> float:
+    return C.RAIL_NIGHT_DELTA.get(rail_class(tags) or "", -5.0)
 
 
 @dataclass
@@ -108,47 +142,68 @@ class Sources:
     """Polylines grouped by kernel type."""
     road_coords: list = field(default_factory=list)   # list of (N,2) lon/lat arrays
     road_levels: list = field(default_factory=list)
+    road_levels_night: list = field(default_factory=list)
     road_kinds: list = field(default_factory=list)    # 'road' | 'rail'
     runway_coords: list = field(default_factory=list)
     runway_levels: list = field(default_factory=list)
+    runway_levels_night: list = field(default_factory=list)
     runway_info: list = field(default_factory=list)
     aerodromes: list = field(default_factory=list)    # dicts with bbox + tags
 
 
 class Handler(osmium.SimpleHandler):
-    def __init__(self):
+    """Pull modelled sources out of an extract.
+
+    `clip` is an optional (west, south, east, north) box.  When set, only ways
+    that touch the box are kept, which is what lets one province-sized .osm.pbf
+    feed many city-sized build regions: the file is streamed once per region
+    and everything outside that region's box is dropped before it costs any
+    memory.  The box passed in should already include the halo, since a source
+    just outside a region still radiates into it.
+    """
+
+    def __init__(self, clip=None):
         super().__init__()
         self.s = Sources()
         self._runways = []  # (coords, tags dict) resolved after aerodromes are known
+        self.clip = tuple(clip) if clip is not None else None
         self.stats = {"ways": 0, "roads": 0, "rails": 0, "runways": 0, "aerodromes": 0}
 
-    @staticmethod
-    def _coords(way):
+    def _coords(self, way):
         pts = []
         for n in way.nodes:
             if n.location.valid():
                 pts.append((n.location.lon, n.location.lat))
-        return np.asarray(pts, dtype=np.float64) if len(pts) >= 2 else None
+        if len(pts) < 2:
+            return None
+        a = np.asarray(pts, dtype=np.float64)
+        if self.clip is not None:
+            w, s, e, n = self.clip
+            if a[:, 0].max() < w or a[:, 0].min() > e or a[:, 1].max() < s or a[:, 1].min() > n:
+                return None
+        return a
 
     def way(self, w):
         self.stats["ways"] += 1
         tags = w.tags
         if "highway" in tags:
-            lvl = road_level(tags)
-            if lvl is not None:
+            dn = road_day_night(tags)
+            if dn is not None:
                 c = self._coords(w)
                 if c is not None:
                     self.s.road_coords.append(c)
-                    self.s.road_levels.append(lvl)
+                    self.s.road_levels.append(dn[0])
+                    self.s.road_levels_night.append(dn[1])
                     self.s.road_kinds.append(0)
                     self.stats["roads"] += 1
         elif "railway" in tags:
-            lvl = rail_level(tags)
-            if lvl is not None:
+            dn = rail_day_night(tags)
+            if dn is not None:
                 c = self._coords(w)
                 if c is not None:
                     self.s.road_coords.append(c)
-                    self.s.road_levels.append(lvl)
+                    self.s.road_levels.append(dn[0])
+                    self.s.road_levels_night.append(dn[1])
                     self.s.road_kinds.append(1)
                     self.stats["rails"] += 1
         if tags.get("aeroway") == "runway" and tags.get("area") != "yes" and not w.is_closed():
@@ -204,6 +259,7 @@ class Handler(osmium.SimpleHandler):
                     cls = "minor"
             self.s.runway_coords.append(coords)
             self.s.runway_levels.append(C.RUNWAY_LEVELS[cls])
+            self.s.runway_levels_night.append(C.RUNWAY_LEVELS[cls] + C.RUNWAY_NIGHT_DELTA[cls])
             self.s.runway_info.append({
                 "class": cls,
                 "airport": (aero or {}).get("name"),
@@ -240,9 +296,16 @@ def pack(seqs: list[np.ndarray]):
     return np.concatenate(seqs), offsets
 
 
-def extract(pbf_path: str, out_path: str, bbox=None) -> dict:
+def extract(pbf_path: str, out_path: str, bbox=None, clip=None) -> dict:
+    """Extract modelled sources from `pbf_path` into `out_path`.
+
+    `bbox` is the region the raster will cover.  `clip`, if given, restricts
+    which ways are read - pass the bbox plus a halo so one large extract can
+    serve many regions.  Passing bbox without clip reads the whole file, which
+    is what the single-city builds do.
+    """
     t0 = time.time()
-    h = Handler()
+    h = Handler(clip=clip)
     h.apply_file(pbf_path, locations=True, idx="flex_mem")
     h.resolve_runways()
     s = h.s
@@ -265,9 +328,11 @@ def extract(pbf_path: str, out_path: str, bbox=None) -> dict:
         out_path,
         road_coords=rc, road_offsets=ro,
         road_levels=np.asarray(s.road_levels, dtype=np.float32),
+        road_levels_night=np.asarray(s.road_levels_night, dtype=np.float32),
         road_kinds=np.asarray(s.road_kinds, dtype=np.int8),
         runway_coords=ac, runway_offsets=ao,
         runway_levels=np.asarray(s.runway_levels, dtype=np.float32),
+        runway_levels_night=np.asarray(s.runway_levels_night, dtype=np.float32),
         bbox=np.asarray(bbox, dtype=np.float64),
         meta=json.dumps(meta),
     )

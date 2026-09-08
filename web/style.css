@@ -106,3 +106,14 @@ table.regions th { color: var(--muted); font-weight: 600; font-size: 12px; }
   .legend { left: 8px; bottom: 24px; width: calc(100vw - 16px); }
   .maplibregl-ctrl-bottom-right { bottom: 132px; }
 }
+
+/* ---------- day / night toggle ---------- */
+.period-row { display: flex; gap: 4px; margin-top: 10px; background: rgba(0,0,0,0.05); padding: 3px; border-radius: 9px; }
+.period-btn {
+  flex: 1; font: inherit; font-size: 13px; padding: 6px 8px; cursor: pointer;
+  border: 0; border-radius: 7px; background: transparent; color: var(--muted); transition: background .12s, color .12s;
+}
+.period-btn:hover { color: var(--ink); }
+.period-btn.is-active { background: #fff; color: var(--ink); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+.pop-other { margin: 6px 0 0; font-size: 12px; color: var(--muted); }
+.pop-other b { color: var(--ink); font-weight: 600; }

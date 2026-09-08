@@ -41,10 +41,12 @@
    ]
   ],
   "stats": {
-   "median_db": 59.0,
-   "p90_db": 68.7,
-   "share_over_65": 0.19,
-   "share_under_50": 0.139
+   "median_db": 50.7,
+   "p90_db": 63.5,
+   "share_over_65": 0.079,
+   "share_under_50": 0.466,
+   "median_db_night": 42.9,
+   "share_over_55_night": 0.128
   }
  },
  {
@@ -99,10 +101,12 @@
    ]
   ],
   "stats": {
-   "median_db": 53.7,
-   "p90_db": 64.6,
-   "share_over_65": 0.094,
-   "share_under_50": 0.379
+   "median_db": 45.0,
+   "p90_db": 59.5,
+   "share_over_65": 0.046,
+   "share_under_50": 0.671,
+   "median_db_night": 36.9,
+   "share_over_55_night": 0.075
   }
  },
  {
@@ -152,10 +156,12 @@
    ]
   ],
   "stats": {
-   "median_db": 54.9,
-   "p90_db": 65.2,
-   "share_over_65": 0.103,
-   "share_under_50": 0.356
+   "median_db": 46.2,
+   "p90_db": 59.9,
+   "share_over_65": 0.046,
+   "share_under_50": 0.633,
+   "median_db_night": 38.2,
+   "share_over_55_night": 0.077
   }
  },
  {
@@ -200,10 +206,12 @@
    ]
   ],
   "stats": {
-   "median_db": 53.8,
-   "p90_db": 64.6,
-   "share_over_65": 0.092,
-   "share_under_50": 0.359
+   "median_db": 44.4,
+   "p90_db": 58.6,
+   "share_over_65": 0.037,
+   "share_under_50": 0.683,
+   "median_db_night": 36.0,
+   "share_over_55_night": 0.057
   }
  },
  {
@@ -238,10 +246,12 @@
    ]
   ],
   "stats": {
-   "median_db": 55.4,
-   "p90_db": 66.1,
-   "share_over_65": 0.12,
-   "share_under_50": 0.347
+   "median_db": 46.4,
+   "p90_db": 61.1,
+   "share_over_65": 0.059,
+   "share_under_50": 0.613,
+   "median_db_night": 38.3,
+   "share_over_55_night": 0.088
   }
  },
  {
@@ -281,10 +291,12 @@
    ]
   ],
   "stats": {
-   "median_db": 51.2,
-   "p90_db": 62.4,
-   "share_over_65": 0.062,
-   "share_under_50": 0.449
+   "median_db": 41.1,
+   "p90_db": 55.7,
+   "share_over_65": 0.022,
+   "share_under_50": 0.778,
+   "median_db_night": 35.0,
+   "share_over_55_night": 0.038
   }
  },
  {
@@ -319,10 +331,12 @@
    ]
   ],
   "stats": {
-   "median_db": 54.3,
-   "p90_db": 64.8,
-   "share_over_65": 0.097,
-   "share_under_50": 0.359
+   "median_db": 44.6,
+   "p90_db": 59.0,
+   "share_over_65": 0.041,
+   "share_under_50": 0.678,
+   "median_db_night": 36.9,
+   "share_over_55_night": 0.07
   }
  },
  {
@@ -362,10 +376,12 @@
    ]
   ],
   "stats": {
-   "median_db": 47.8,
-   "p90_db": 60.4,
-   "share_over_65": 0.039,
-   "share_under_50": 0.571
+   "median_db": 38.8,
+   "p90_db": 54.4,
+   "share_over_65": 0.016,
+   "share_under_50": 0.813,
+   "median_db_night": 35.0,
+   "share_over_55_night": 0.025
   }
  }
 ]

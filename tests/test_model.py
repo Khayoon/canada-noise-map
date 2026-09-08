@@ -12,7 +12,7 @@ import numpy as np
 import pytest
 
 from pipeline import config as C
-from pipeline import extract, model, tiles
+from pipeline import emission, extract, model, tiles
 
 
 def _line_level(distance_m, level_db, kernel, ref_dist, cell_m=14.0, n=800):
@@ -31,15 +31,25 @@ def test_reference_level_is_reproduced():
 
 
 def test_line_source_decay_rate():
-    # Between 60 m and 480 m (3 doublings) the drop should be ~4.5 dB per
-    # doubling for p = 2.5, plus a little absorption.
-    p = C.ROAD_KERNEL["exponent"]
-    per_doubling = 10 * (p - 1) * math.log10(2)
-    L1 = _line_level(60, 69.0, C.ROAD_KERNEL, C.REF_DIST_ROAD_M)
-    L2 = _line_level(480, 69.0, C.ROAD_KERNEL, C.REF_DIST_ROAD_M)
-    drop = L1 - L2
-    absorption = C.ROAD_KERNEL["absorption_db_per_km"] * (480 - 60) / 1000
-    assert abs(drop - (3 * per_doubling + absorption)) < 1.0
+    """With absorption switched off the kernel must reproduce the closed-form
+    line-source decay exactly: d^(1-p), i.e. 10(p-1)log10(2) dB per doubling."""
+    kernel = dict(C.ROAD_KERNEL, absorption_db_per_km=0.0)
+    per_doubling = 10 * (kernel["exponent"] - 1) * math.log10(2)
+    L1 = _line_level(60, 69.0, kernel, C.REF_DIST_ROAD_M)
+    L2 = _line_level(480, 69.0, kernel, C.REF_DIST_ROAD_M)
+    assert abs((L1 - L2) - 3 * per_doubling) < 0.3
+
+
+def test_absorption_adds_attenuation_monotonically():
+    """Excess attenuation through built-up ground must only ever reduce the
+    level, and by more at greater distance."""
+    quiet = dict(C.ROAD_KERNEL, absorption_db_per_km=0.0)
+    loud = dict(C.ROAD_KERNEL, absorption_db_per_km=12.0)
+    near = _line_level(60, 69.0, quiet, C.REF_DIST_ROAD_M) - _line_level(60, 69.0, loud, C.REF_DIST_ROAD_M)
+    far = _line_level(480, 69.0, quiet, C.REF_DIST_ROAD_M) - _line_level(480, 69.0, loud, C.REF_DIST_ROAD_M)
+    assert 0.0 < near < far
+    # 12 dB/km over a 500 m urban path should be a handful of dB, not tens.
+    assert 2.0 < far < 10.0
 
 
 def test_two_roads_add_three_db():
@@ -81,8 +91,8 @@ def test_encode_values_reserves_zero_for_nodata():
     db = np.array([[35.0, 60.0], [0.0, 95.0]], dtype=np.float32)
     valid = np.array([[True, True], [False, True]])
     v = tiles.encode_values(db, valid)
-    assert v[1, 0] == 0
     s = tiles.VALUE_SCALE
+    assert v[1, 0] == 0
     assert v[0, 0] == 35 * s and v[0, 1] == 60 * s and v[1, 1] == 95 * s
 
 
@@ -101,9 +111,49 @@ def test_maxspeed_parsing():
     assert extract.parse_lanes("4") == 4 and extract.parse_lanes("many") is None
 
 
-def test_road_level_corrections():
-    base = C.ROAD_CLASSES["primary"][0]
-    assert extract.road_level({"highway": "primary"}) == base
-    assert extract.road_level({"highway": "primary", "lanes": "4"}) == pytest.approx(base + 10 * math.log10(2))
+def test_road_level_skips_what_it_should():
+    assert extract.road_level({"highway": "primary"}) is not None
     assert extract.road_level({"highway": "primary", "tunnel": "yes"}) is None
     assert extract.road_level({"highway": "footway"}) is None
+    assert extract.road_level({"highway": "service", "service": "driveway"}) is None
+
+
+def test_emission_scales_with_flow_and_speed():
+    """Equation (1): +3 dB per doubling of traffic, and more traffic or more
+    speed is always louder."""
+    base = emission.level(10_000, 50, 0.05, 0.07)
+    assert emission.level(20_000, 50, 0.05, 0.07) == pytest.approx(base + 3.01, abs=0.01)
+    assert emission.level(10_000, 80, 0.05, 0.07) > base
+    assert emission.level(10_000, 50, 0.20, 0.07) > base   # more trucks
+
+
+def test_propulsion_term_stops_slow_roads_vanishing():
+    """Collapsing the two emission terms into rolling noise alone made low
+    speed roads far too quiet; the propulsion floor must keep 30 km/h within a
+    few dB of what pure 30log10(v) rolling would give at 70."""
+    rolling_only = 30.0 * math.log10(30.0 / emission.V_REF)
+    assert emission.vehicle_power(30.0) > rolling_only + 1.5
+
+
+def test_night_is_quieter_and_class_dependent():
+    """Night falls out of the traffic split, so a freeway that keeps its night
+    traffic must drop less than a residential street that empties out."""
+    free_day, free_night = emission.road_levels("motorway", None, None)
+    res_day, res_night = emission.road_levels("residential", None, None)
+    assert free_night < free_day and res_night < res_day
+    assert (free_day - free_night) < (res_day - res_night)
+
+
+def test_anchor_reproduces_published_freeway_level():
+    """Two carriageways of a busy freeway must land inside the published
+    70-80 dB(A)-at-15 m band the model is anchored to."""
+    one = emission.road_levels("motorway", None, None)[0]
+    both = 10 * math.log10(2 * 10 ** (one / 10))
+    assert 70.0 <= both <= 80.0
+
+
+def test_osm_tags_refine_the_class_defaults():
+    plain = extract.road_level({"highway": "primary"})
+    assert extract.road_level({"highway": "primary", "lanes": "8"}) > plain
+    assert extract.road_level({"highway": "primary", "maxspeed": "80"}) > plain
+    assert extract.road_level({"highway": "primary", "maxspeed": "30"}) < plain
