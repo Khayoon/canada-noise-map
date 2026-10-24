@@ -1,0 +1,10 @@
+*.py
+*.sh
+*.pmtiles
+*.geojson
+*.osm.pbf
+*.map
+.env*
+engine/
+pipeline/
+config.py
