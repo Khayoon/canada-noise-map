@@ -15,13 +15,15 @@
   ],
   "zoom": 11,
   "cell_m": 13.8,
-  "osm_timestamp": "2026-08-28T23:00:00Z",
+  "osm_timestamp": "2026-10-24T00:00:00Z",
   "sources": {
-   "ways": 1480390,
-   "roads": 155473,
-   "rails": 5275,
+   "ways": 1484784,
+   "roads": 147415,
+   "rails": 5273,
    "runways": 15,
-   "aerodromes": 4
+   "aerodromes": 4,
+   "sites": 7361,
+   "counted": 19751
   },
   "airports": [
    [
@@ -41,17 +43,17 @@
    ]
   ],
   "stats": {
-   "median_db": 50.7,
-   "p90_db": 63.5,
-   "share_over_65": 0.079,
-   "share_under_50": 0.466,
-   "median_db_night": 42.9,
-   "share_over_55_night": 0.128
+   "median_db": 52.6,
+   "p90_db": 64.2,
+   "share_over_65": 0.089,
+   "share_under_50": 0.388,
+   "median_db_night": 44.9,
+   "share_over_55_night": 0.141
   }
  },
  {
   "id": "montreal",
-  "name": "Montr\u00e9al",
+  "name": "Montr\u00c3\u00a9al",
   "province": "QC",
   "bbox": [
    -74.086,
@@ -65,13 +67,15 @@
   ],
   "zoom": 11,
   "cell_m": 13.4,
-  "osm_timestamp": "2026-08-28T23:00:00Z",
+  "osm_timestamp": "2026-10-24T00:00:00Z",
   "sources": {
-   "ways": 1540468,
-   "roads": 151197,
-   "rails": 3108,
+   "ways": 1544184,
+   "roads": 137428,
+   "rails": 3117,
    "runways": 19,
-   "aerodromes": 7
+   "aerodromes": 7,
+   "sites": 4133,
+   "counted": 7082
   },
   "airports": [
    [
@@ -101,12 +105,12 @@
    ]
   ],
   "stats": {
-   "median_db": 45.0,
-   "p90_db": 59.5,
-   "share_over_65": 0.046,
-   "share_under_50": 0.671,
-   "median_db_night": 36.9,
-   "share_over_55_night": 0.075
+   "median_db": 46.1,
+   "p90_db": 60.7,
+   "share_over_65": 0.057,
+   "share_under_50": 0.631,
+   "median_db_night": 38.0,
+   "share_over_55_night": 0.087
   }
  },
  {
@@ -125,13 +129,15 @@
   ],
   "zoom": 11,
   "cell_m": 12.5,
-  "osm_timestamp": "2026-08-28T23:00:00Z",
+  "osm_timestamp": "2026-10-24T00:00:00Z",
   "sources": {
-   "ways": 927578,
-   "roads": 90237,
-   "rails": 2789,
+   "ways": 933884,
+   "roads": 85619,
+   "rails": 2799,
    "runways": 16,
-   "aerodromes": 6
+   "aerodromes": 6,
+   "sites": 3376,
+   "counted": 0
   },
   "airports": [
    [
@@ -156,17 +162,17 @@
    ]
   ],
   "stats": {
-   "median_db": 46.2,
-   "p90_db": 59.9,
-   "share_over_65": 0.046,
-   "share_under_50": 0.633,
-   "median_db_night": 38.2,
-   "share_over_55_night": 0.077
+   "median_db": 48.2,
+   "p90_db": 61.4,
+   "share_over_65": 0.062,
+   "share_under_50": 0.568,
+   "median_db_night": 40.1,
+   "share_over_55_night": 0.092
   }
  },
  {
   "id": "ottawa",
-  "name": "Ottawa\u2013Gatineau",
+  "name": "Ottawa\u00e2\u20ac\u201cGatineau",
   "province": "ON",
   "bbox": [
    -75.95,
@@ -180,13 +186,15 @@
   ],
   "zoom": 11,
   "cell_m": 13.4,
-  "osm_timestamp": "2026-08-28T23:00:00Z",
+  "osm_timestamp": "2026-10-24T00:00:00Z",
   "sources": {
-   "ways": 628493,
-   "roads": 50410,
+   "ways": 630161,
+   "roads": 49602,
    "rails": 651,
    "runways": 11,
-   "aerodromes": 6
+   "aerodromes": 6,
+   "sites": 1944,
+   "counted": 1003
   },
   "airports": [
    [
@@ -206,12 +214,12 @@
    ]
   ],
   "stats": {
-   "median_db": 44.4,
-   "p90_db": 58.6,
-   "share_over_65": 0.037,
-   "share_under_50": 0.683,
-   "median_db_night": 36.0,
-   "share_over_55_night": 0.057
+   "median_db": 45.7,
+   "p90_db": 59.6,
+   "share_over_65": 0.051,
+   "share_under_50": 0.656,
+   "median_db_night": 37.1,
+   "share_over_55_night": 0.067
   }
  },
  {
@@ -230,13 +238,15 @@
   ],
   "zoom": 11,
   "cell_m": 12.0,
-  "osm_timestamp": "2026-08-28T23:00:00Z",
+  "osm_timestamp": "2026-10-24T00:00:00Z",
   "sources": {
-   "ways": 728172,
-   "roads": 70434,
-   "rails": 1164,
+   "ways": 734757,
+   "roads": 70408,
+   "rails": 1156,
    "runways": 5,
-   "aerodromes": 3
+   "aerodromes": 3,
+   "sites": 1910,
+   "counted": 1966
   },
   "airports": [
    [
@@ -246,17 +256,17 @@
    ]
   ],
   "stats": {
-   "median_db": 46.4,
-   "p90_db": 61.1,
-   "share_over_65": 0.059,
-   "share_under_50": 0.613,
-   "median_db_night": 38.3,
-   "share_over_55_night": 0.088
+   "median_db": 48.0,
+   "p90_db": 62.0,
+   "share_over_65": 0.065,
+   "share_under_50": 0.56,
+   "median_db_night": 39.8,
+   "share_over_55_night": 0.095
   }
  },
  {
   "id": "waterloo",
-  "name": "Kitchener\u2013Waterloo",
+  "name": "Kitchener\u00e2\u20ac\u201cWaterloo",
   "province": "ON",
   "bbox": [
    -80.65,
@@ -270,13 +280,15 @@
   ],
   "zoom": 11,
   "cell_m": 13.9,
-  "osm_timestamp": "2026-08-28T23:00:00Z",
+  "osm_timestamp": "2026-10-24T00:00:00Z",
   "sources": {
-   "ways": 413336,
-   "roads": 34511,
-   "rails": 527,
+   "ways": 415492,
+   "roads": 33783,
+   "rails": 528,
    "runways": 11,
-   "aerodromes": 3
+   "aerodromes": 3,
+   "sites": 1769,
+   "counted": 563
   },
   "airports": [
    [
@@ -291,12 +303,12 @@
    ]
   ],
   "stats": {
-   "median_db": 41.1,
-   "p90_db": 55.7,
-   "share_over_65": 0.022,
-   "share_under_50": 0.778,
+   "median_db": 42.2,
+   "p90_db": 58.3,
+   "share_over_65": 0.042,
+   "share_under_50": 0.738,
    "median_db_night": 35.0,
-   "share_over_55_night": 0.038
+   "share_over_55_night": 0.059
   }
  },
  {
@@ -315,13 +327,15 @@
   ],
   "zoom": 12,
   "cell_m": 13.6,
-  "osm_timestamp": "2026-08-28T23:00:00Z",
+  "osm_timestamp": "2026-10-24T00:00:00Z",
   "sources": {
-   "ways": 122191,
-   "roads": 13768,
+   "ways": 126442,
+   "roads": 13856,
    "rails": 310,
    "runways": 1,
-   "aerodromes": 2
+   "aerodromes": 2,
+   "sites": 417,
+   "counted": 0
   },
   "airports": [
    [
@@ -331,12 +345,12 @@
    ]
   ],
   "stats": {
-   "median_db": 44.6,
-   "p90_db": 59.0,
-   "share_over_65": 0.041,
-   "share_under_50": 0.678,
-   "median_db_night": 36.9,
-   "share_over_55_night": 0.07
+   "median_db": 45.8,
+   "p90_db": 61.5,
+   "share_over_65": 0.069,
+   "share_under_50": 0.628,
+   "median_db_night": 38.3,
+   "share_over_55_night": 0.097
   }
  },
  {
@@ -355,13 +369,15 @@
   ],
   "zoom": 12,
   "cell_m": 12.7,
-  "osm_timestamp": "2026-08-28T23:00:00Z",
+  "osm_timestamp": "2026-10-24T00:00:00Z",
   "sources": {
-   "ways": 156147,
-   "roads": 18063,
+   "ways": 158637,
+   "roads": 17725,
    "rails": 15,
    "runways": 7,
-   "aerodromes": 1
+   "aerodromes": 1,
+   "sites": 468,
+   "counted": 0
   },
   "airports": [
    [
@@ -376,12 +392,12 @@
    ]
   ],
   "stats": {
-   "median_db": 38.8,
-   "p90_db": 54.4,
-   "share_over_65": 0.016,
-   "share_under_50": 0.813,
+   "median_db": 40.4,
+   "p90_db": 56.4,
+   "share_over_65": 0.023,
+   "share_under_50": 0.795,
    "median_db_night": 35.0,
-   "share_over_55_night": 0.025
+   "share_over_55_night": 0.029
   }
  }
 ]
